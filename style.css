@@ -1,0 +1,204 @@
+/* Scribble Story — hyper-minimal styling.
+   Everything you'll want to tune lives in :root below. */
+
+:root {
+  color-scheme: light dark;
+
+  --bg:    #faf8f2;   /* warm paper */
+  --ink:   #1c1a17;   /* near-black */
+  --faint: #a49d8f;   /* choice numbers, title, "start over" */
+  --rule:  #e4ddcd;   /* hairlines between choices */
+  --hover: #000;      /* choice underline on hover/focus */
+  --error: #b3261e;
+
+  --font-prose: "Iowan Old Style", "Palatino Linotype", Palatino,
+                "Book Antiqua", Georgia, "Times New Roman", serif;
+  --font-mono:  ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  --measure: 33rem;   /* reading column width */
+  --pace:    0.45s;   /* scene fade-in speed */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:    #14130f;
+    --ink:   #e9e4d8;
+    --faint: #6c6656;
+    --rule:  #2b2820;
+    --hover: #fff;
+    --error: #f2b8b5;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-prose);
+  font-size: clamp(1.05rem, 1rem + 0.4vw, 1.2rem);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.page {
+  max-width: var(--measure);
+  margin: 0 auto;
+  min-height: 100dvh;
+  padding: clamp(2rem, 8vh, 6rem) 1.5rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+/* Masthead ------------------------------------------------------------ */
+
+.story-title {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+/* Scene -------------------------------------------------------------- */
+
+.scene { flex: 1; }
+
+.art {
+  margin: 0 0 2rem;
+}
+
+.art img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Shown only when an illustration is named in story.js but the file
+   isn't there yet — tells you which drawing to make. */
+.art-placeholder {
+  padding: 2.75rem 1rem;
+  border: 1px dashed var(--rule);
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  text-align: center;
+  word-break: break-all;
+}
+
+.prose { outline: none; }
+.prose p { margin: 0 0 1.2em; text-wrap: pretty; }
+.prose p:last-child { margin-bottom: 0; }
+
+/* Choices ---------------------------------------------------------- */
+
+.choices {
+  margin: 2.5rem 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--rule);
+}
+
+.choices--end { border-top: 0; }
+
+.choices li { border-bottom: 1px solid var(--rule); }
+.choices--end li { border-bottom: 0; }
+
+.choice {
+  display: flex;
+  gap: 0.9rem;
+  width: 100%;
+  padding: 0.95rem 0.25rem;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.choice-key {
+  min-width: 1ch;
+  padding-top: 0.15em;
+  color: var(--faint);
+  font-size: 0.8em;
+  font-variant-numeric: tabular-nums;
+}
+
+.choice-label {
+  flex: 1;
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-underline-offset: 0.18em;
+  transition: text-decoration-color 0.15s ease;
+}
+
+.choice:hover .choice-label,
+.choice:focus-visible .choice-label { text-decoration-color: var(--hover); }
+.choice:focus-visible { outline: none; }
+
+.the-end {
+  padding: 1.4rem 0.25rem 0.5rem;
+  color: var(--faint);
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* Footer --------------------------------------------------------- */
+
+.restart {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.8rem;
+  color: var(--faint);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
+.restart:hover,
+.restart[data-armed="true"] { color: var(--ink); }
+
+/* Messages ---------------------------------------------------- */
+
+.engine-error {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: var(--error);
+}
+
+.noscript-note {
+  max-width: var(--measure);
+  margin: 4rem auto;
+  padding: 0 1.5rem;
+}
+
+/* Motion ------------------------------------------------------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  .scene.is-entering .art,
+  .scene.is-entering .prose > p,
+  .scene.is-entering .choices > * {
+    animation: rise var(--pace) cubic-bezier(0.2, 0.6, 0.2, 1) both;
+  }
+  .scene.is-entering .prose > p:nth-child(1) { animation-delay: 0.05s; }
+  .scene.is-entering .prose > p:nth-child(2) { animation-delay: 0.12s; }
+  .scene.is-entering .prose > p:nth-child(3) { animation-delay: 0.19s; }
+  .scene.is-entering .prose > p:nth-child(n + 4) { animation-delay: 0.26s; }
+  .scene.is-entering .choices > * { animation-delay: 0.32s; }
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(0.5rem); }
+  to   { opacity: 1; transform: none; }
+}

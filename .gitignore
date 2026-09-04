@@ -1,0 +1,18 @@
+# macOS
+.DS_Store
+
+# Editor / tooling
+.vscode/
+.idea/
+*.swp
+
+# Claude Code local files (launch config, local settings)
+.claude/
+
+# Illustration working files — keep these in the design folder, not the repo
+*.psd
+*.ai
+*.sketch
+*.procreate
+*.afdesign
+*.afphoto

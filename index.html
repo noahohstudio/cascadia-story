@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Scribble Story</title>
+  <meta name="description" content="A small choice-based story you read in your browser.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#faf8f2" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M4 20 Q8 9 12 17 T20 15 T28 16' fill='none' stroke='%231c1a17' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="page">
+    <header class="masthead">
+      <h1 class="story-title" data-title>Scribble Story</h1>
+    </header>
+
+    <article class="scene" data-scene>
+      <figure class="art" data-art hidden></figure>
+      <div class="prose" data-prose>
+        <p>Loading the story&hellip;</p>
+      </div>
+      <ul class="choices" data-choices></ul>
+    </article>
+
+    <footer class="footer">
+      <button type="button" class="restart" data-restart hidden>Start over</button>
+    </footer>
+  </main>
+
+  <noscript>
+    <p class="noscript-note">
+      Scribble Story needs JavaScript &mdash; it&rsquo;s a small interactive story,
+      not a static page. Turn JavaScript on for this site and reload.
+    </p>
+  </noscript>
+
+  <script src="story.js"></script>
+  <script src="engine.js"></script>
+</body>
+</html>

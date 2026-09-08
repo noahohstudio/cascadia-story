@@ -1,19 +1,18 @@
-/* Scribble Story — a tiny engine for choice-based interactive fiction.
+/* Cascadia Story — a small interactive-fiction engine.
  *
- * No build step, no dependencies. You write the story in story.js; this
- * file turns it into a playable page. You shouldn't need to touch it
- * often — see the notes in story.js for the scene format.
+ * Interim build: it renders a choice-based scene graph from story.js. The
+ * interaction model is being reworked (freeform text input + an AI response
+ * layer), so expect this file to change. No build step, no dependencies.
  */
 
 (function () {
   "use strict";
 
-  var SAVE_KEY = "scribble-story:save";
+  var SAVE_KEY = "cascadia-story:save";
 
   var el = {
     scene:   document.querySelector("[data-scene]"),
     title:   document.querySelector("[data-title]"),
-    art:     document.querySelector("[data-art]"),
     prose:   document.querySelector("[data-prose]"),
     choices: document.querySelector("[data-choices]"),
     restart: document.querySelector("[data-restart]")
@@ -84,7 +83,7 @@
     try {
       return !!choice.when(state.vars, state.visited);
     } catch (e) {
-      console.error('Scribble Story: choice "when" threw', choice, e);
+      console.error('Cascadia Story: choice "when" threw', choice, e);
       return false;
     }
   }
@@ -114,7 +113,6 @@
     }
     save();
 
-    renderArt(scene.art);
     renderProse(scene.text);
     renderChoices(scene.choices || []);
     disarmRestart();
@@ -128,25 +126,6 @@
     el.prose.setAttribute("tabindex", "-1");
     el.prose.focus({ preventScroll: true });
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  function renderArt(src) {
-    el.art.textContent = "";
-    el.art.hidden = !src;
-    if (!src) return;
-
-    var img = new Image();
-    img.alt = "";
-    img.decoding = "async";
-    img.src = src;
-    img.onerror = function () {
-      el.art.textContent = "";
-      var note = document.createElement("div");
-      note.className = "art-placeholder";
-      note.textContent = src; // which file to draw
-      el.art.appendChild(note);
-    };
-    el.art.appendChild(img);
   }
 
   function renderProse(text) {
@@ -212,8 +191,6 @@
   }
 
   function showError(message) {
-    el.art.hidden = true;
-    el.art.textContent = "";
     el.prose.textContent = "";
     el.choices.textContent = "";
     var p = document.createElement("p");

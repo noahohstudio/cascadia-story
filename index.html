@@ -2,40 +2,43 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Scribble Story</title>
-  <meta name="description" content="A small choice-based story you read in your browser.">
-  <meta name="color-scheme" content="light dark">
-  <meta name="theme-color" content="#faf8f2" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#14130f" media="(prefers-color-scheme: dark)">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M4 20 Q8 9 12 17 T20 15 T28 16' fill='none' stroke='%231c1a17' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Cascadia Story</title>
+
+  <!--
+    ── Interface intentionally blank ──────────────────────────────────────
+    The design lands here from Figma (desktop first, then a title screen).
+    engine.js just needs these hooks to exist somewhere on the page. The
+    markup and classes around them are yours — restructure freely, keep
+    the data-* attributes.
+
+      REQUIRED
+        [data-scene]     wrapper for the whole scene; gets the .is-entering
+                         class on every scene change (hook for transitions)
+        [data-prose]     container; engine fills it with one <p> per paragraph
+        [data-choices]   <ul>; engine fills it with <li><button class="choice">
+
+      OPTIONAL
+        [data-title]     text node; receives STORY.title
+        [data-restart]   <button>; "start over" control (two clicks to confirm)
+
+    NOTE: the choice list is the current interim input. The real model is
+    freeform text + an AI response layer — a text input and a response
+    region will land here once that design is settled.
+    ───────────────────────────────────────────────────────────────────────
+  -->
+
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="page">
-    <header class="masthead">
-      <h1 class="story-title" data-title>Scribble Story</h1>
-    </header>
-
-    <article class="scene" data-scene>
-      <figure class="art" data-art hidden></figure>
-      <div class="prose" data-prose>
-        <p>Loading the story&hellip;</p>
-      </div>
-      <ul class="choices" data-choices></ul>
-    </article>
-
-    <footer class="footer">
-      <button type="button" class="restart" data-restart hidden>Start over</button>
-    </footer>
+  <main data-scene>
+    <h1 data-title></h1>
+    <div data-prose></div>
+    <ul data-choices></ul>
+    <button type="button" data-restart hidden></button>
   </main>
 
-  <noscript>
-    <p class="noscript-note">
-      Scribble Story needs JavaScript &mdash; it&rsquo;s a small interactive story,
-      not a static page. Turn JavaScript on for this site and reload.
-    </p>
-  </noscript>
+  <noscript>This story needs JavaScript to run.</noscript>
 
   <script src="story.js"></script>
   <script src="engine.js"></script>

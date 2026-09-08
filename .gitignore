@@ -9,10 +9,10 @@
 # Claude Code local files (launch config, local settings)
 .claude/
 
-# Illustration working files — keep these in the design folder, not the repo
+# Design working files — keep these in the design folder, not the repo
 *.psd
 *.ai
 *.sketch
-*.procreate
+*.fig
 *.afdesign
 *.afphoto

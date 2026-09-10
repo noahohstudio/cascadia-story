@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1000" role="img" aria-label="Placeholder character portrait">
+  <defs>
+    <pattern id="halftone" width="16" height="16" patternUnits="userSpaceOnUse">
+      <circle cx="3" cy="3" r="1.7" fill="#1f1f1f" fill-opacity="0.09"/>
+    </pattern>
+    <clipPath id="litSide">
+      <rect x="0" y="0" width="372" height="1000"/>
+    </clipPath>
+    <g id="bust">
+      <path d="M96 1000 C 118 748, 240 648, 400 648 C 560 648, 682 748, 704 1000 Z"/>
+      <rect x="342" y="512" width="116" height="150" rx="24"/>
+      <ellipse cx="400" cy="398" rx="152" ry="190"/>
+      <path d="M243 356 C 250 196, 300 150, 400 150 C 500 150, 550 196, 557 356 C 566 300, 548 236, 400 226 C 252 236, 234 300, 243 356 Z"/>
+    </g>
+  </defs>
+
+  <rect width="800" height="1000" fill="#f3f1ea"/>
+  <use href="#bust" fill="#1e1e1e"/>
+  <use href="#bust" fill="#7c7c7c" clip-path="url(#litSide)"/>
+  <rect width="800" height="1000" fill="url(#halftone)"/>
+  <text x="400" y="70" text-anchor="middle" font-family="ui-monospace, Menlo, monospace" font-size="22" letter-spacing="3" fill="#9a9a9a">PLACEHOLDER PORTRAIT</text>
+</svg>

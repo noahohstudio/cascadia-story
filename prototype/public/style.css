@@ -1,0 +1,120 @@
+/* Prototype styling — approximates nav A + the stark mono look. Not the
+   real design; just enough to judge the loop. */
+
+:root {
+  --ink: #141414;
+  --paper: #ffffff;
+  --bar: #444444;
+  --rule: #d9d9d9;
+  --dim: #8a8a8a;
+  --mono: "Cascadia Code", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --measure: 62ch;
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  min-height: 100dvh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/* --- nav A: bar 1 (white) + bar 2 (dark) --- */
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 2.2rem;
+  height: 46px;
+  padding: 0 clamp(1rem, 4vw, 2.4rem);
+  border-bottom: 1px solid var(--ink);
+  font-weight: 700;
+}
+
+.nav__item { cursor: default; }
+
+.nav__tag {
+  margin-left: auto;
+  font-weight: 400;
+  font-size: 0.8em;
+  color: var(--dim);
+  letter-spacing: 0.15em;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 40px;
+  padding: 0 clamp(1rem, 4vw, 2.4rem);
+  background: var(--bar);
+  color: var(--paper);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.status__right { font-weight: 400; opacity: 0.85; }
+
+/* --- transcript --- */
+
+.transcript {
+  overflow-y: auto;
+  padding: clamp(1.5rem, 5vh, 3rem) clamp(1rem, 4vw, 2.4rem) 1.5rem;
+}
+
+.transcript__inner {
+  max-width: var(--measure);
+  margin: 0 auto;
+}
+
+.entry { margin: 0 0 1.5rem; white-space: pre-wrap; }
+.entry:last-child { margin-bottom: 0; }
+
+.entry--say {           /* the player's own words */
+  color: var(--dim);
+}
+.entry--say::before { content: "> "; }
+
+.entry--note {          /* system beats: a thread opens, Del steps away */
+  color: var(--dim);
+  font-style: italic;
+  border-left: 2px solid var(--rule);
+  padding-left: 0.9rem;
+}
+
+.entry--wait { color: var(--dim); }
+
+/* --- composer (pinned) --- */
+
+.composer {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 1rem clamp(1rem, 4vw, 2.4rem) calc(1rem + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--ink);
+}
+
+.composer__mark { font-weight: 700; }
+
+.composer__input {
+  flex: 1;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  outline: none;
+}
+
+.composer__input::placeholder { color: var(--dim); }
+
+.composer[data-busy] { opacity: 0.5; }
+.composer[data-done] { display: none; }

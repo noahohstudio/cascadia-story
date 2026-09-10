@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Cascadia Story — prototype</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- nav A: two stacked bars -->
+  <header class="nav">
+    <span class="nav__item">Home</span>
+    <span class="nav__item">Restart</span>
+    <span class="nav__item">About</span>
+    <span class="nav__item">Mode</span>
+    <span class="nav__tag" data-mock hidden>MOCK</span>
+  </header>
+  <div class="status">
+    <span class="status__left" data-who>DEL</span>
+    <span class="status__right" data-progress>&mdash;</span>
+  </div>
+
+  <main class="transcript" data-transcript aria-live="polite"></main>
+
+  <form class="composer" data-form>
+    <span class="composer__mark">&gt;</span>
+    <input class="composer__input" data-input type="text" autocomplete="off"
+           autocapitalize="sentences" placeholder="say something to Del…" aria-label="Your words">
+  </form>
+
+  <script type="module" src="app.mjs"></script>
+</body>
+</html>

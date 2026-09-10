@@ -142,8 +142,35 @@ export async function runTurn({ state, history, playerInput }) {
   };
 }
 
-/* ---- MOCK: no API key needed. Crude heuristics, but enough to click through
-   the UI and watch the status bar move. ------------------------------------ */
+/* ---- MOCK: no API key needed and deliberately dumb — a few keyword-matched
+   canned lines so you can click through the UI and watch the status bar move.
+   It does NOT represent the real thing; the client shows a banner saying so. */
+const MOCK_LINES = {
+  shut: [
+    "Del's pen goes back to the crossword. “Long night, friend. Ice machine's down the walk.” That's the end of it, for now.",
+  ],
+  reveal: [
+    "Del is quiet for a moment. “I take the nights on purpose,” they say. “My kid drove east on this road a few years back. Nights are when somebody might drive back through. Somebody should be at the desk if they do.” The pen stays down.",
+  ],
+  pushed: [
+    "Del's mouth thins. “Checkout's eleven,” they say, like that answers something. The newspaper crackles.",
+    "“Vending's by the ice machine,” Del says, and turns the page.",
+    "A long look, then back to the crossword. “Hm.”",
+  ],
+  warm: [
+    "Del looks up, briefly. “Hn.” A beat. “Coffee's fresh if you want the bad kind.” Something in the shoulders loosens a little.",
+    "Del sets the pen down. “Can't sleep either, huh.” Not quite a question.",
+    "“Sit if you want,” Del says, nodding at the plastic chair. “It's a slow night.”",
+  ],
+  idle: [
+    "“Pass is clear till Thursday,” Del says. “Storm coming after.” The pen taps the folded paper.",
+    "Del fills in a word. “Seven letters, 'stubborn as a mule.' Adamant.” Doesn't look up.",
+    "The heater kicks on somewhere behind the desk. Del doesn't seem to notice.",
+    "“Room's got the good kind of quiet at least,” Del offers. “Highway's the only noise.”",
+  ],
+};
+const pick = (a) => a[Math.floor(Math.random() * a.length)];
+
 function mockTurn(state, playerInput) {
   const t = playerInput.toLowerCase();
   const pushed = /(just tell|come on|why won't|ignore|answer me|\?.*\?)/.test(t);
@@ -161,18 +188,11 @@ function mockTurn(state, playerInput) {
   }
 
   let narration;
-  if (g >= 9) {
-    narration = "Del's pen goes back to the crossword. “Long night, friend. Ice machine's down the walk.” That's the end of it, for now.";
-  } else if (revealed.includes("why_nights")) {
-    narration =
-      "Del is quiet for a moment. “I take the nights on purpose,” they say. “My kid drove east on this road a few years back. Nights are when somebody might drive back through. Somebody should be at the desk if they do.” The pen stays down.";
-  } else if (pushed) {
-    narration = "Del's mouth thins. “Checkout's eleven,” they say, like that answers something. The newspaper crackles.";
-  } else if (warm) {
-    narration = "Del looks up, briefly. “Hn.” A beat. “Coffee's fresh if you want the bad kind.” Something in the shoulders loosens a little.";
-  } else {
-    narration = "“Pass is clear till Thursday,” Del says. “Storm coming after.” The pen taps the folded paper.";
-  }
+  if (g >= 9) narration = pick(MOCK_LINES.shut);
+  else if (revealed.includes("why_nights")) narration = pick(MOCK_LINES.reveal);
+  else if (pushed) narration = pick(MOCK_LINES.pushed);
+  else if (warm) narration = pick(MOCK_LINES.warm);
+  else narration = pick(MOCK_LINES.idle);
 
   return {
     output: {

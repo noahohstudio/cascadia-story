@@ -23,7 +23,7 @@ html, body {
 body {
   margin: 0;
   display: grid;
-  grid-template-rows: auto auto 1fr auto;
+  grid-template-rows: auto auto auto 1fr auto;
   height: 100dvh;
   background: var(--paper);
   color: var(--ink);
@@ -68,6 +68,15 @@ body {
 
 .status__right { font-weight: 400; opacity: 0.85; }
 
+.mockbar {
+  padding: 0.5rem clamp(1rem, 4vw, 2.4rem);
+  background: #f7efd7;
+  border-bottom: 1px solid var(--ink);
+  font-size: 0.82em;
+  font-weight: 700;
+}
+.mockbar code { font-weight: 400; }
+
 /* --- stage: portrait rail + transcript --- */
 
 .stage {
@@ -98,9 +107,10 @@ body {
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: clamp(1.5rem, 5vh, 3rem) clamp(1rem, 4vw, 2.4rem) 1.5rem;
-  /* soften the line where scrolling text meets the fixed status bar */
-  mask-image: linear-gradient(to bottom, transparent 0, #000 26px);
+  /* top padding clears the fade band so content is crisp at rest */
+  padding: clamp(2rem, 5vh, 3rem) clamp(1rem, 4vw, 2.4rem) 1.5rem;
+  /* soften text only as it scrolls up under the fixed status bar */
+  mask-image: linear-gradient(to bottom, transparent 0, #000 24px);
 }
 
 .transcript__inner {

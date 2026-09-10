@@ -5,7 +5,7 @@
   "version": "0.0.0",
   "description": "Throwaway spike — does freeform input + AI narration + guardrails + a shifting emotional state actually work as a game loop?",
   "scripts": {
-    "start": "node server.mjs"
+    "start": "node --env-file-if-exists=.env server.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.70.0"

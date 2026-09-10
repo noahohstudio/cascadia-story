@@ -9,21 +9,30 @@ A throwaway spike to answer one question before we build the real thing:
 night motel clerk) with two gated secrets. Delete this folder once we've
 decided.
 
-## Run it
+## Run it for real (with Claude)
 
 ```bash
 cd prototype
-npm install
+npm install                       # once
 
-# Option 1 — see the whole UI with no API key (canned responses):
-MOCK=1 npm start
-
-# Option 2 — the real thing:
-export ANTHROPIC_API_KEY=sk-ant-...
+echo 'ANTHROPIC_API_KEY=sk-ant-...' > .env    # your key, from console.anthropic.com
 npm start
 ```
 
-Open <http://localhost:4180>.
+Open <http://localhost:4180>. (`.env` is gitignored. One-off instead of a
+file: `ANTHROPIC_API_KEY=sk-ant-... npm start`.)
+
+## Run the UI only (no key)
+
+```bash
+MOCK=1 npm start
+```
+
+**MOCK mode is not a test of anything.** Del's replies are ~15 canned lines
+matched by keyword — say similar things and you'll get similar or identical
+text back. It exists only to click through the layout. The page shows a
+banner and a `MOCK` badge when it's on. To judge whether the concept works,
+run it for real (above).
 
 ## What to poke at
 

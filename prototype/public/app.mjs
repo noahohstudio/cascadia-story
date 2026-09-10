@@ -7,6 +7,7 @@ const els = {
   who: document.querySelector("[data-who]"),
   progress: document.querySelector("[data-progress]"),
   mock: document.querySelector("[data-mock]"),
+  mockbar: document.querySelector("[data-mockbar]"),
 };
 
 let scenario = null;
@@ -38,9 +39,13 @@ async function boot() {
   const data = await r.json();
   scenario = data;
   state = data.state;
-  if (data.mock) els.mock.hidden = false;
+  if (data.mock) {
+    els.mock.hidden = false;
+    els.mockbar.hidden = false;
+  }
   add(data.opening);
   renderStatus();
+  els.transcript.scrollTop = 0; // don't start scrolled
   els.input.focus();
 }
 

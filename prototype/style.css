@@ -23,7 +23,7 @@ html, body {
 body {
   margin: 0;
   display: grid;
-  grid-template-rows: auto auto auto 1fr auto;
+  grid-template-rows: auto auto 1fr auto;
   height: 100dvh;
   background: var(--paper);
   color: var(--ink);
@@ -48,10 +48,13 @@ body {
 
 .nav__tag {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
   font-weight: 400;
-  font-size: 0.8em;
+  font-size: 0.78em;
   color: var(--dim);
-  letter-spacing: 0.15em;
+  cursor: pointer;
 }
 
 .status {
@@ -67,15 +70,6 @@ body {
 }
 
 .status__right { font-weight: 400; opacity: 0.85; }
-
-.mockbar {
-  padding: 0.5rem clamp(1rem, 4vw, 2.4rem);
-  background: #f7efd7;
-  border-bottom: 1px solid var(--ink);
-  font-size: 0.82em;
-  font-weight: 700;
-}
-.mockbar code { font-weight: 400; }
 
 /* --- stage: portrait rail + transcript --- */
 
@@ -134,6 +128,15 @@ body {
 }
 
 .entry--wait { color: var(--dim); }
+
+.entry--debug {          /* match diagnostics, "show matches" toggle */
+  color: #6a6a6a;
+  font-size: 0.8em;
+  background: #f4f4f2;
+  border-left: 2px solid var(--rule);
+  padding: 0.5rem 0.8rem;
+  margin-bottom: 0.9rem;
+}
 
 /* --- composer (pinned) --- */
 

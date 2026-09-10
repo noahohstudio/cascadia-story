@@ -3,6 +3,11 @@
  *
  *   node server.mjs                 # needs ANTHROPIC_API_KEY in the env
  *   MOCK=1 node server.mjs          # no key; canned responses
+ *
+ * Meant to run locally. If you do deploy it with a real key attached, the
+ * crude guards below (per-IP throttle + a hard per-process turn budget) keep
+ * a runaway bill unlikely — but the real backstop is a monthly spend limit
+ * set on the Anthropic workspace itself.
  */
 
 import { createServer } from "node:http";
@@ -14,6 +19,36 @@ import { runTurn, applyOutcome } from "./turn.mjs";
 
 const ROOT = fileURLToPath(new URL("./public/", import.meta.url));
 const PORT = Number(process.env.PORT) || 4180;
+
+// --- abuse guards (see header) ------------------------------------------
+const MAX_TURNS = Number(process.env.MAX_TURNS) || 300; // total live turns this process will serve
+const IP_MIN_GAP_MS = Number(process.env.IP_MIN_GAP_MS) || 2500;
+const IP_HOURLY_CAP = Number(process.env.IP_HOURLY_CAP) || 60;
+let turnsUsed = 0;
+const ipHits = new Map(); // ip -> recent request timestamps
+
+const LOOPBACK = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
+
+function clientIp(req) {
+  const fwd = req.headers["x-forwarded-for"];
+  return (fwd ? String(fwd).split(",")[0] : req.socket.remoteAddress || "?").trim();
+}
+
+// The author running it on their own machine — no proxy, loopback socket.
+function isLocalCaller(req) {
+  return !req.headers["x-forwarded-for"] && LOOPBACK.has(clientIp(req));
+}
+
+function rateLimited(req) {
+  const ip = clientIp(req);
+  const now = Date.now();
+  const hits = (ipHits.get(ip) || []).filter((t) => now - t < 3_600_000);
+  if (hits.length && now - hits[hits.length - 1] < IP_MIN_GAP_MS) return "Slow down a moment.";
+  if (hits.length >= IP_HOURLY_CAP) return "That's a lot of turns this hour — come back later.";
+  hits.push(now);
+  ipHits.set(ip, hits);
+  return null;
+}
 const TYPES = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
@@ -61,12 +96,21 @@ const server = createServer(async (req, res) => {
         return send(res, 409, { error: "Del has stepped away. Restart to try again." });
       }
 
+      if (process.env.MOCK !== "1" && !isLocalCaller(req)) {
+        const limited = rateLimited(req);
+        if (limited) return send(res, 429, { error: limited });
+        if (turnsUsed >= MAX_TURNS) {
+          return send(res, 429, { error: "This demo has spent its turn budget for now." });
+        }
+      }
+
       const t0 = Date.now();
       const { output, usage } = await runTurn({
         state: state ?? initialState,
         history,
         playerInput: playerInput.trim(),
       });
+      turnsUsed++;
       const nextState = applyOutcome(state ?? initialState, output);
 
       return send(res, 200, {
@@ -97,8 +141,9 @@ const server = createServer(async (req, res) => {
 
     send(res, 405, "method not allowed", "text/plain");
   } catch (err) {
-    console.error(err);
     const status = Number.isInteger(err?.status) && err.status >= 400 ? err.status : 500;
+    if (status >= 500) console.error(err);
+    else console.warn(`  ${status} — ${err?.message || err}`);
     send(res, status, { error: String(err?.message || err) });
   }
 });
@@ -106,8 +151,12 @@ const server = createServer(async (req, res) => {
 server.listen(PORT, () => {
   const mode = process.env.MOCK === "1" ? "MOCK (no API calls)" : "live (Claude)";
   console.log(`\n  Cascadia Story prototype — ${mode}`);
-  console.log(`  http://localhost:${PORT}\n`);
-  if (process.env.MOCK !== "1" && !process.env.ANTHROPIC_API_KEY) {
-    console.log("  ⚠  ANTHROPIC_API_KEY is not set. Either export it, or run with MOCK=1.\n");
+  console.log(`  http://localhost:${PORT}`);
+  if (process.env.MOCK !== "1") {
+    console.log(`  guards: ${MAX_TURNS} turns / process, ${IP_HOURLY_CAP} per IP per hour`);
+    if (!process.env.ANTHROPIC_API_KEY) {
+      console.log("  ⚠  ANTHROPIC_API_KEY is not set — set it, or run with MOCK=1.");
+    }
   }
+  console.log("");
 });

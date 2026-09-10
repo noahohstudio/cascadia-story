@@ -98,7 +98,8 @@ const server = createServer(async (req, res) => {
     send(res, 405, "method not allowed", "text/plain");
   } catch (err) {
     console.error(err);
-    send(res, 500, { error: String(err?.message || err) });
+    const status = Number.isInteger(err?.status) && err.status >= 400 ? err.status : 500;
+    send(res, status, { error: String(err?.message || err) });
   }
 });
 

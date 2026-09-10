@@ -7,6 +7,13 @@ import { scenario, moodFor } from "./scenario.mjs";
 
 const MODEL = "claude-opus-5"; // prototype: best sense of the ceiling. Production would try claude-haiku-4-5 for most turns.
 
+// An error carrying an HTTP-ish status the server can surface cleanly.
+function tagged(status, message) {
+  const e = new Error(message);
+  e.status = status;
+  return e;
+}
+
 const narrateTool = {
   name: "narrate",
   description:
@@ -106,22 +113,47 @@ export function applyOutcome(state, out) {
 export async function runTurn({ state, history, playerInput }) {
   if (process.env.MOCK === "1") return mockTurn(state, playerInput);
 
-  const client = new Anthropic(); // resolves ANTHROPIC_API_KEY from the environment
+  const key = process.env.ANTHROPIC_API_KEY;
+  if (!key || !key.trim()) {
+    throw tagged(428, "No ANTHROPIC_API_KEY set. Put it in prototype/.env, or run with MOCK=1.");
+  }
+  if (!/^sk-ant-/.test(key.trim()) || key !== key.trim()) {
+    throw tagged(
+      401,
+      "ANTHROPIC_API_KEY doesn't look right — it should start with 'sk-ant-' and have no quotes or surrounding whitespace. Check prototype/.env.",
+    );
+  }
+
+  const client = new Anthropic({ apiKey: key.trim() });
   const messages = history.flatMap((t) => [
     { role: "user", content: t.player },
     { role: "assistant", content: t.narration },
   ]);
   messages.push({ role: "user", content: playerInput });
 
-  const res = await client.messages.create({
-    model: MODEL,
-    max_tokens: 1200,
-    output_config: { effort: "low" },
-    system: buildSystem(state),
-    tools: [narrateTool],
-    tool_choice: { type: "auto" }, // + a system instruction to always call it; avoids thinking/forced-tool interactions
-    messages,
-  });
+  let res;
+  try {
+    res = await client.messages.create({
+      model: MODEL,
+      max_tokens: 1200,
+      output_config: { effort: "low" },
+      system: buildSystem(state),
+      tools: [narrateTool],
+      tool_choice: { type: "auto" }, // + a system instruction to always call it; avoids thinking/forced-tool interactions
+      messages,
+    });
+  } catch (err) {
+    if (err instanceof Anthropic.AuthenticationError) {
+      throw tagged(401, "The API rejected your ANTHROPIC_API_KEY. Make sure it's a current key from console.anthropic.com and that the account has credit.");
+    }
+    if (err instanceof Anthropic.RateLimitError) {
+      throw tagged(429, "Rate limited by the API — wait a few seconds and try again.");
+    }
+    if (err instanceof Anthropic.APIError && /credit|billing|quota/i.test(err.message)) {
+      throw tagged(402, "The API account is out of credit. Add some at console.anthropic.com → Billing.");
+    }
+    throw err;
+  }
 
   const call = res.content.find((b) => b.type === "tool_use");
   if (call) return { output: call.input, usage: res.usage };

@@ -53,7 +53,7 @@ said. What became of Wes is never answered.
 | `engine.mjs` | Turn rules. Deterministic; no story text lives here. |
 | `match.mjs` | Loads the model, embeds every cue, returns the closest match. |
 | `app.mjs` / `index.html` / `style.css` | Title screen, nav A, transcript, rain, night/paper modes. |
-| `del.svg` | Del: a two-tone portrait (charcoal on white), hand-drawn as SVG. |
+| `del.png` | Del: a photo turned into Cascadia Code ASCII art, rasterised (charcoal on white). |
 
 ## Tuning
 

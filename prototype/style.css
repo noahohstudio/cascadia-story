@@ -13,7 +13,10 @@
  */
 
 :root {
-  --u: clamp(0.68px, calc(100vw / 1920), 1px);      /* 1 Figma px */
+  --u: clamp(0.68px, calc(100vw / 1920), 1px);      /* 1 Figma px: type + vertical */
+  --lu: min(1px, calc(100vw / 1920));               /* 1 Figma px: horizontal layout,
+                                                       scales evenly so Del never
+                                                       crowds the text */
   --t: min(calc(100vw / 1920), calc(100vh / 1080)); /* title screen unit */
   --font: "Cascadia Code", "Cascadia Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --dusk: 0;
@@ -74,7 +77,7 @@ p { margin: 0; }
   align-items: flex-start;
   gap: calc(44 * var(--u));
   height: calc(52 * var(--u));
-  padding: calc(15 * var(--u)) calc(145 * var(--u)) 0; /* Figma: text top at 15 */
+  padding: calc(15 * var(--u)) calc(145 * var(--lu)) 0; /* Figma: text top at 15 */
   border-bottom: 1px solid var(--rule);
   background: var(--bg);
 }
@@ -108,20 +111,21 @@ p { margin: 0; }
   align-items: center;
   justify-content: space-between;
   height: calc(44 * var(--u));
-  padding: 0 calc(195 * var(--u)) 0 calc(145 * var(--u));
+  padding: 0 calc(195 * var(--lu)) 0 calc(145 * var(--lu));
   background: var(--ink-2);
   color: var(--on-bar);
   font-weight: 700;
   white-space: nowrap;
 }
 
-/* ── stage: portrait 740 wide at x 145, 48 below the bars;
-      text column 755 wide at x 970 (85 gap) ───────────────────────────── */
+/* ── stage: portrait at x 145, 48 below the bars, then an 85 gap and the
+      text. Figma's slot is 740 wide; Del is kept to 560 so the text gets
+      the room (text column 935, ending at x 1725 like the Figma text). ── */
 
 .stage {
   display: grid;
   grid-template-columns:
-    calc(145 * var(--u)) calc(740 * var(--u)) calc(85 * var(--u)) minmax(0, 1fr);
+    calc(145 * var(--lu)) calc(560 * var(--lu)) calc(85 * var(--lu)) minmax(0, 1fr);
   min-height: 0;
   overflow: hidden;
 }
@@ -179,11 +183,11 @@ p { margin: 0; }
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: calc(114 * var(--u)) calc(195 * var(--u)) calc(144 * var(--u)) 0;
+  padding: calc(114 * var(--u)) calc(195 * var(--lu)) calc(144 * var(--u)) 0;
   scrollbar-width: thin;
 }
 
-.transcript__inner { max-width: calc(755 * var(--u)); }
+.transcript__inner { max-width: calc(935 * var(--lu)); }
 
 /* Rhythm from the Figma blocks:
      Location heading          bold
@@ -300,7 +304,7 @@ p { margin: 0; }
   width: calc(972 * var(--t));
   height: calc(1098 * var(--t));
   transform: translateX(-50%);
-  object-fit: cover;
+  object-fit: contain;
   opacity: 0.5;
 }
 [data-theme="night"] .title__portrait { filter: invert(1); mix-blend-mode: screen; opacity: 0.3; }
@@ -360,7 +364,7 @@ p { margin: 0; }
   .nav { gap: 24px; }
   .stage {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: 26vh minmax(0, 1fr);
+    grid-template-rows: 20vh minmax(0, 1fr);
   }
   .portrait { grid-column: 1; margin: 16px 16px 0; height: calc(100% - 16px); }
   .transcript { grid-column: 1; padding: 32px 16px 96px; }

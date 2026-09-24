@@ -1,39 +1,69 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="paper">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Cascadia Story — prototype</title>
+  <title>Del's Bridge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cascadia+Code:wght@400;700&display=swap">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- nav A: two stacked bars -->
+  <!-- Title screen (Figma 80:17). The model downloads behind it. -->
+  <section class="title" data-title-screen>
+    <img class="title__portrait" src="portrait.png" alt="" width="740" height="836">
+    <h1 class="title__name">Del's Bridge</h1>
+    <button class="title__start" type="button" data-start disabled>
+      <span data-start-label>Loading 0%</span>
+    </button>
+  </section>
+
+  <!-- nav A, bar 1 (Figma 80:33) -->
   <header class="nav">
-    <span class="nav__item">Home</span>
-    <span class="nav__item">Restart</span>
-    <span class="nav__item">About</span>
-    <span class="nav__item">Mode</span>
-    <label class="nav__tag"><input type="checkbox" data-debug> show matches</label>
+    <button type="button" class="nav__item" data-home>Home</button>
+    <button type="button" class="nav__item" data-restart>Restart</button>
+    <button type="button" class="nav__item" data-about>About</button>
+    <button type="button" class="nav__item" data-mode>Mode</button>
+    <!-- testing only: visible when the URL ends in ?debug -->
+    <label class="nav__debug" hidden><input type="checkbox" data-debug> show matches</label>
   </header>
-  <div class="status">
-    <span class="status__left" data-who>DEL</span>
-    <span class="status__right" data-progress>&mdash;</span>
+
+  <!-- nav A, bar 2 (Figma 80:30) -->
+  <div class="status" aria-live="polite">
+    <span data-location>In your car</span>
+    <span data-choices>0 choices made</span>
   </div>
 
   <div class="stage">
-    <figure class="portrait">
-      <!-- swap for a real two-tone / dithered portrait later -->
-      <img src="portrait.svg" alt="" width="800" height="1000">
+    <figure class="portrait" data-portrait>
+      <div class="portrait__sky"></div>
+      <canvas class="portrait__rain" data-rain aria-hidden="true"></canvas>
+      <img class="portrait__img" src="portrait.png" alt="" width="740" height="836">
     </figure>
-    <main class="transcript" data-transcript aria-live="polite"></main>
+
+    <main class="transcript" data-transcript>
+      <div class="transcript__inner">
+        <div class="log" data-log aria-live="polite"></div>
+        <!-- the ">user input" line: lives in the transcript, under the last response -->
+        <form class="prompt" data-form hidden>
+          <span class="prompt__mark" aria-hidden="true">&gt;</span>
+          <input class="prompt__input" data-input type="text" autocomplete="off" spellcheck="false"
+                 autocapitalize="sentences" aria-label="What you do or say">
+        </form>
+      </div>
+    </main>
   </div>
 
-  <form class="composer" data-form>
-    <span class="composer__mark">&gt;</span>
-    <input class="composer__input" data-input type="text" autocomplete="off"
-           autocapitalize="sentences" placeholder="say something to Del…" aria-label="Your words" disabled>
-  </form>
+  <dialog class="about" data-about-dialog>
+    <p><b>About</b></p>
+    <p>A short piece of interactive fiction in the Playfic tradition, but with no parser to learn. Type what you'd do or say, in your own words.</p>
+    <p>A small language model runs in your browser to work out what you meant. It never writes anything. Every line in the story was written by hand.</p>
+    <p>Some things he'll only tell you if you ask again, or say "go on". Type "help" if you're stuck.</p>
+    <form method="dialog"><button type="submit" class="button">Close</button></form>
+  </dialog>
 
+  <noscript>This story needs JavaScript to run.</noscript>
   <script type="module" src="app.mjs"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-/* Cascadia Story — a small interactive-fiction engine.
+/* Del's Bridge — a small interactive-fiction engine.
  *
  * Interim build: it renders a choice-based scene graph from story.js. The
  * interaction model is being reworked (freeform text input + an AI response
@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  var SAVE_KEY = "cascadia-story:save";
+  var SAVE_KEY = "dels-bridge:save";
 
   var el = {
     scene:   document.querySelector("[data-scene]"),
@@ -83,7 +83,7 @@
     try {
       return !!choice.when(state.vars, state.visited);
     } catch (e) {
-      console.error('Cascadia Story: choice "when" threw', choice, e);
+      console.error("Del's Bridge: choice \"when\" threw", choice, e);
       return false;
     }
   }

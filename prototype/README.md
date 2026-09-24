@@ -1,12 +1,9 @@
-# Prototype — the $0 path
+# Prototype — Hollis Creek Bridge
 
-Does semantic matching against **author-written** lines feel good enough to
-carry the game, with no API and no per-play cost?
-
-Every word Del says is written in [content.mjs](content.mjs). A ~25 MB
-sentence-embedding model runs in the browser (once, then cached), embeds what
-the player types, and returns the closest-matching line. The AI *understands*
-input; it doesn't *write*. No server, no key, works offline after first load.
+A short, complete playthrough built on the $0 path: no API, no server, no
+key. Every word the game says is written in [content.mjs](content.mjs). A
+~25 MB sentence-embedding model runs in the browser (once, then cached),
+works out what the player *meant*, and the engine serves the matching line.
 
 ## Run it
 
@@ -15,38 +12,54 @@ cd prototype
 python3 -m http.server 4180
 ```
 
-Open <http://localhost:4180>. First load downloads the model (~25 MB) —
-"Waking Del up…". After that it's instant and offline.
+Open <http://localhost:4180>. The model loads behind the title screen, and
+**Begin** lights up when it's ready.
 
-Tick **show matches** (top right) to see what each input matched and how
-confidently.
+Tick **show matches** (top right) to see what each input matched, how
+confidently, and Del's agitation / trust after each turn.
 
-## What works, what to poke at
+## The story in one breath
 
-- **Matching** — try lots of phrasings for the same idea ("why nights",
-  "don't you sleep", "who works these hours"). It's parser-IF quality: right
-  most of the time, occasionally picks an adjacent line. Nonsense and
-  off-topic input fall back to Del deflecting.
-- **The arc** — share something real, be patient (watch the mood in the
-  status bar go wary → thawing → open), then ask a topic *more than once* to
-  draw the deeper answer out. Both secrets should surface in ~8–12 turns.
-- **Guardrails** — push him ("just tell me", "answer the question") and the
-  mood tightens; push again from "shut" and he ends the conversation.
+You're lost on a detour. The only way on is a drawbridge, raised, kept by
+Del, an old man who thinks it's still October 14, 1987: the night his son
+Wes drove east across this bridge after a fight and was told not to come
+back. Del raises the bridge every night so anyone coming west has to stop
+at his window. The bridge comes down when you help him say what he never
+said. What became of Wes is never answered.
 
-## How it's wired
+**Endings:** the bridge comes down (patience) · you turn around (you quit)
+· the window closes (you pushed too hard).
+
+## How a turn works
+
+1. **Plain words first** (`quickTurn` in `engine.mjs`): answers to Del's own
+   questions (your name, yes/no), `look`, `wait`, `help`, `inventory`, and
+   follow-ups like `why?` / `go on`, which ask the last topic again.
+2. **Otherwise the model** (`match.mjs`) finds the closest *cue* among
+   actions, moves and topics, and `resolveTurn` applies it.
+3. **Guardrails:** high-stakes cues (turning around, lying, grabbing the
+   lever) need a confident match. Near-misses make Del ask *"You asking
+   about the bridge?"*. Patient moves only earn trust a couple of times each.
+   He warns you once before shutting the window.
+4. **Then time passes:** the clock ticks, dusk becomes night, and Del has
+   his own moments (asks your name, mistakes you for Wes, forgets your name)
+   spaced at least three turns apart.
+
+## Files
 
 | File | Role |
 | --- | --- |
-| `content.mjs` | **Everything Del says.** `moves` (how the player is behaving) and `topics` (subjects, each a ladder of responses gated by mood / flags / reveals). This becomes the real character. |
-| `match.mjs` | Loads the embedding model (`Xenova/all-MiniLM-L6-v2` via transformers.js CDN), embeds every cue, returns the best match by cosine similarity. |
-| `engine.mjs` | Deterministic turn resolution: pick a response, walk the ladder, apply mood/flag/reveal changes. `MATCH_THRESHOLD` is the "did they actually say anything" cutoff. |
-| `app.mjs` / `index.html` / `style.css` | nav A layout, transcript, one pinned input. |
+| `content.mjs` | **The whole story.** Places, actions, moves, topics (ladders of answers gated by trust / threads / flags), Del's own beats, filler, hints, endings. The header explains the format. |
+| `engine.mjs` | Turn rules. Deterministic; no story text lives here. |
+| `match.mjs` | Loads the model, embeds every cue, returns the closest match. |
+| `app.mjs` / `index.html` / `style.css` | Title screen, nav A, transcript, rain, night/paper modes. |
+| `portrait.png` | The ASCII portrait from Figma (placeholder face). |
 
-## Known rough edges (prototype content, not the engine)
+## Tuning
 
-- The placeholder ladders can repeat a line when you ask again but haven't
-  earned the next rung — real content wants a variant or a "you've asked
-  before" beat.
-- ~25 MB first-load download is the one real cost of this path. Cached after,
-  but worth knowing for mobile.
-- Cue authoring is the work: more phrasings per topic = fewer misfires.
+- **A phrase lands in the wrong place?** Add it (or something close) to the
+  `cues` of the place it should go. More cues = fewer misfires.
+- `MATCH_THRESHOLD` (0.46) / `NEAR_MISS` (0.38) in `engine.mjs`: the "did
+  that mean anything" cutoff, and the "Eh? You asking about…" band.
+- `minScore` on a cue group: how sure the model must be before a
+  high-stakes move fires.

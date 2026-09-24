@@ -1,5 +1,5 @@
 /* ===========================================================================
- * Cascadia Story — the story lives here. This is the file you write in.
+ * Del's Bridge — the story lives here. This is the file you write in.
  * ===========================================================================
  *
  * PROVISIONAL FORMAT. The engine currently renders a choice-based scene
@@ -34,7 +34,7 @@
  * =========================================================================== */
 
 const STORY = {
-  title: "Cascadia Story",
+  title: "Del's Bridge",
   start: "start",
   endText: "The End",
   againText: "Play again",

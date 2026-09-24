@@ -1,4 +1,4 @@
-# Cascadia Story
+# Del's Bridge
 
 A Playfic-style interactive-fiction web game. Instead of a fixed parser
 (`n`, `x`, `look`) or a menu of options, the player types whatever they want
@@ -27,8 +27,10 @@ Next:
 
 ## Run it
 
+From this folder:
+
 ```bash
-cd ~/cascadia-story && python3 -m http.server 4177
+python3 -m http.server 4177
 ```
 
 Open <http://localhost:4177>, or just open `index.html` in a browser.
@@ -49,5 +51,5 @@ Static site. For GitHub Pages: **Settings → Pages → Deploy from a branch →
 
 ## Design files
 
-Mockups and working files live in
-`~/Desktop/design/vibecoding/cascadia-story/`, not the repo.
+This folder is the whole project — code and design work together. Heavy
+source files (`.fig`, `.psd`, `.ai`, …) are git-ignored, so they stay local.

@@ -1,19 +1,48 @@
-/* Prototype styling — approximates nav A + the stark mono look. Not the
-   real design; just enough to judge the loop. */
+/* Del's Bridge — built to the Figma frames:
+ *   "desktop — nav A · stacked bars" (80:24)   the game screen
+ *   "desktop" (80:17)                          the title screen
+ *
+ * Every size below is the Figma value in px at a 1920-wide frame, written
+ * as calc(N * var(--u)). At 1920px wide and up, --u is exactly 1px, so the
+ * page matches Figma pixel for pixel; narrower screens scale it all down
+ * together so the proportions hold.
+ *
+ * Themes (the Mode button):
+ *   paper  (default) exactly the Figma frames: white, black, #444
+ *   night  a dark variant with dusk, rain and his mood in the portrait
+ */
 
 :root {
-  --ink: #141414;
-  --paper: #ffffff;
-  --bar: #444444;
-  --rule: #d9d9d9;
-  --dim: #8a8a8a;
-  --mono: "Cascadia Code", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
-  --measure: 62ch;
+  --u: clamp(0.68px, calc(100vw / 1920), 1px);      /* 1 Figma px */
+  --t: min(calc(100vw / 1920), calc(100vh / 1080)); /* title screen unit */
+  --font: "Cascadia Code", "Cascadia Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --dusk: 0;
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+:root[data-theme="paper"] {
+  --bg: #ffffff;
+  --ink: #000000;       /* all text in the Figma frames */
+  --ink-2: #444444;     /* the bars, the title, the Start button */
+  --on-bar: #ffffff;
+  --rule: #000000;      /* nav hairline */
+  --speech: #000000;
+  --quiet: #444444;
+}
+
+:root[data-theme="night"] {
+  --bg: #0e1013;
+  --ink: #b3aea4;
+  --ink-2: #444444;
+  --on-bar: #ffffff;
+  --rule: #2a2e35;
+  --speech: #ece6d8;    /* Del's words sit brighter than narration */
+  --quiet: #6c7078;
 }
 
 * { box-sizing: border-box; }
 
-/* Lock the page: only the transcript scrolls, and nothing bounces past its end. */
+/* Lock the page: only the transcript scrolls. */
 html, body {
   height: 100%;
   overflow: hidden;
@@ -23,158 +52,322 @@ html, body {
 body {
   margin: 0;
   display: grid;
-  grid-template-rows: auto auto 1fr auto;
+  grid-template-rows: auto auto 1fr;
   height: 100dvh;
-  background: var(--paper);
+  background: var(--bg);
   color: var(--ink);
-  font-family: var(--mono);
-  font-size: 15px;
-  line-height: 1.6;
+  font-family: var(--font);
+  font-size: calc(20 * var(--u));
+  font-weight: 400;
+  line-height: normal; /* Figma "leading: normal" = the font's own line height */
 }
 
-/* --- nav A: bar 1 (white) + bar 2 (dark) --- */
+button, input { font: inherit; color: inherit; line-height: inherit; }
+p { margin: 0; }
+[hidden] { display: none !important; }
+
+/* ── nav A, bar 1 (Figma 80:33): 52 tall, white, 1px black bottom rule,
+      bold 20, first item at x 145, items 44 apart ────────────────────── */
 
 .nav {
   display: flex;
-  align-items: center;
-  gap: 2.2rem;
-  height: 46px;
-  padding: 0 clamp(1rem, 4vw, 2.4rem);
-  border-bottom: 1px solid var(--ink);
-  font-weight: 700;
+  align-items: flex-start;
+  gap: calc(44 * var(--u));
+  height: calc(52 * var(--u));
+  padding: calc(15 * var(--u)) calc(145 * var(--u)) 0; /* Figma: text top at 15 */
+  border-bottom: 1px solid var(--rule);
+  background: var(--bg);
 }
 
-.nav__item { cursor: default; }
-
-.nav__tag {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-weight: 400;
-  font-size: 0.78em;
-  color: var(--dim);
+.nav__item {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font-weight: 700;
   cursor: pointer;
 }
+.nav__item:hover,
+.nav__item:focus-visible,
+.nav__item[data-armed] { text-decoration: underline; text-underline-offset: 0.2em; }
+
+.nav__debug {
+  margin-left: auto;
+  display: flex;
+  gap: 0.4em;
+  align-items: center;
+  font-size: 0.7em;
+  cursor: pointer;
+}
+
+/* ── nav A, bar 2 (Figma 80:30): 44 tall, #444, bold 20 white,
+      left text at x 145, right text ends at x 1725 ──────────────────── */
 
 .status {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 40px;
-  padding: 0 clamp(1rem, 4vw, 2.4rem);
-  background: var(--bar);
-  color: var(--paper);
+  height: calc(44 * var(--u));
+  padding: 0 calc(195 * var(--u)) 0 calc(145 * var(--u));
+  background: var(--ink-2);
+  color: var(--on-bar);
   font-weight: 700;
-  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
-.status__right { font-weight: 400; opacity: 0.85; }
-
-/* --- stage: portrait rail + transcript --- */
+/* ── stage: portrait 740 wide at x 145, 48 below the bars;
+      text column 755 wide at x 970 (85 gap) ───────────────────────────── */
 
 .stage {
   display: grid;
-  grid-template-columns: minmax(280px, 38%) 1fr;
-  min-height: 0; /* let the transcript scroll instead of stretching the row */
+  grid-template-columns:
+    calc(145 * var(--u)) calc(740 * var(--u)) calc(85 * var(--u)) minmax(0, 1fr);
+  min-height: 0;
   overflow: hidden;
 }
 
 .portrait {
-  margin: 0;
+  grid-column: 2;
+  position: relative;
+  margin: calc(48 * var(--u)) 0 0;
+  height: min(calc(836 * var(--u)), calc(100% - 48 * var(--u)));
   overflow: hidden;
-  border-right: 1px solid var(--ink);
-  background: #f3f1ea;
 }
 
-.portrait img {
+.portrait__img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: center 22%;
-  display: block;
+  object-fit: contain;
+  object-position: center top;
+  transition: opacity 1.6s var(--ease), filter 1.6s var(--ease);
 }
 
-/* --- transcript --- */
+/* night only: the sky behind him, rain, and his mood fading the portrait */
+.portrait__sky, .portrait__rain { display: none; }
+
+[data-theme="night"] .portrait__sky,
+[data-theme="night"] .portrait__rain {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+[data-theme="night"] .portrait__sky {
+  background: linear-gradient(to bottom, #262838 0%, #4a3a4c 48%, #8a5a4c 82%, #b57452 100%);
+  opacity: 0.5;
+}
+[data-theme="night"] .portrait__sky::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, #07080b, #151922);
+  opacity: var(--dusk);
+  transition: opacity 3s var(--ease);
+}
+[data-theme="night"] .portrait__img { filter: invert(1); mix-blend-mode: screen; opacity: 0.6; }
+[data-theme="night"][data-mood="present"] .portrait__img { opacity: 0.8; }
+[data-theme="night"][data-mood="uneasy"]  .portrait__img { opacity: 0.4; filter: invert(1) blur(0.6px); }
+[data-theme="night"][data-mood="closing"] .portrait__img { opacity: 0.22; filter: invert(1) blur(1.4px); }
+
+/* ── transcript: first block 114 below the bars ───────────────────────── */
 
 .transcript {
+  grid-column: 4;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
-  /* top padding clears the fade band so content is crisp at rest */
-  padding: clamp(2rem, 5vh, 3rem) clamp(1rem, 4vw, 2.4rem) 1.5rem;
-  /* soften text only as it scrolls up under the fixed status bar */
-  mask-image: linear-gradient(to bottom, transparent 0, #000 24px);
+  padding: calc(114 * var(--u)) calc(195 * var(--u)) calc(144 * var(--u)) 0;
+  scrollbar-width: thin;
 }
 
-.transcript__inner {
-  max-width: var(--measure);
-  margin: 0 auto;
+.transcript__inner { max-width: calc(755 * var(--u)); }
+
+/* Rhythm from the Figma blocks:
+     Location heading          bold
+     (blank line)
+     body text                 regular
+     (blank line)
+     >user input
+     (72 px)
+     next Location heading … */
+
+.entry { margin-bottom: 1lh; }
+.entry p + p { margin-top: 1lh; }
+
+.entry__heading {
+  margin: 0 0 1lh;
+  font-size: inherit;
+  font-weight: 700;
 }
 
-.entry { margin: 0 0 1.5rem; white-space: pre-wrap; }
-.entry:last-child { margin-bottom: 0; }
+.speech { color: var(--speech); }
 
-.entry--say {           /* the player's own words */
-  color: var(--dim);
-}
-.entry--say::before { content: "> "; }
+.entry--say { margin-bottom: calc(72 * var(--u)); }
+.entry--say p::before { content: ">"; }
 
-.entry--note {          /* system beats: a thread opens, Del steps away */
-  color: var(--dim);
-  font-style: italic;
-  border-left: 2px solid var(--rule);
-  padding-left: 0.9rem;
-}
+/* things the Figma doesn't show, drawn only in its own vocabulary */
+.entry--ambient,
+.entry--note,
+.entry--thread,
+.entry--wait { color: var(--quiet); }
 
-.entry--wait { color: var(--dim); }
-
-.entry--debug {          /* match diagnostics, "show matches" toggle */
-  color: #6a6a6a;
-  font-size: 0.8em;
-  background: #f4f4f2;
-  border-left: 2px solid var(--rule);
-  padding: 0.5rem 0.8rem;
-  margin-bottom: 0.9rem;
-}
-
-/* --- composer (pinned) --- */
-
-.composer {
-  display: flex;
-  align-items: baseline;
-  gap: 0.6rem;
-  padding: 1rem clamp(1rem, 4vw, 2.4rem) calc(1rem + env(safe-area-inset-bottom, 0px));
-  border-top: 1px solid var(--ink);
-}
-
-.composer__mark { font-weight: 700; }
-
-.composer__input {
-  flex: 1;
+.choices { display: flex; gap: 2ch; margin-top: 1lh; }
+.choice {
+  padding: 0;
   border: 0;
   background: none;
-  padding: 0;
-  font: inherit;
-  color: inherit;
-  outline: none;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
 }
 
-.composer__input::placeholder { color: var(--dim); }
+.entry--ending { margin-top: calc(72 * var(--u)); }
+.ending__title { margin: 0 0 1lh; font-size: inherit; font-weight: 700; }
 
-.composer[data-busy] { opacity: 0.5; }
-.composer[data-done] { display: none; }
+.entry--debug {
+  font-size: 0.7em;
+  white-space: pre-wrap;
+  color: var(--quiet);
+}
 
-/* --- narrow: portrait becomes a top band --- */
+/* the #444 block button from the title screen (Figma 80:20) */
+.button,
+.ending__again {
+  width: calc(315 * var(--u));
+  padding: calc(10 * var(--u));
+  border: 0;
+  background: var(--ink-2);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ending__again { margin-top: 1lh; }
+.button:hover, .ending__again:hover,
+.button:focus-visible, .ending__again:focus-visible { background: #000; }
 
-@media (max-width: 820px) {
+/* ── the ">user input" line ────────────────────────────────────────────── */
+
+.prompt {
+  display: flex;
+  align-items: baseline;
+  margin: 0;
+}
+
+.prompt__input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  outline: none;
+  caret-color: currentColor;
+}
+.prompt[data-busy] .prompt__input { opacity: 0.4; }
+
+/* new text arrives paragraph by paragraph */
+.is-new {
+  animation: arrive 0.9s var(--ease) both;
+  animation-delay: var(--delay, 0ms);
+}
+@keyframes arrive {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── title screen (Figma 80:17): portrait 972×1098 at 50% opacity,
+      "Del's Bridge" bold 128 #444 at y 432, Start 315 wide at y 604.
+      Positions are measured from the frame's vertical centre (540). ──── */
+
+.title {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  overflow: hidden;
+  background: var(--bg);
+  transition: opacity 1s var(--ease), visibility 1s;
+}
+.title.is-gone { opacity: 0; visibility: hidden; }
+
+.title__portrait {
+  position: absolute;
+  left: 50%;
+  top: calc(50% - 549 * var(--t));
+  width: calc(972 * var(--t));
+  height: calc(1098 * var(--t));
+  transform: translateX(-50%);
+  object-fit: cover;
+  opacity: 0.5;
+}
+[data-theme="night"] .title__portrait { filter: invert(1); mix-blend-mode: screen; opacity: 0.3; }
+
+.title__name {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(50% - 108 * var(--t));
+  margin: 0;
+  color: var(--ink-2);
+  font-size: calc(128 * var(--t));
+  font-weight: 700;
+  line-height: normal;
+  text-align: center;
+}
+[data-theme="night"] .title__name { color: #ece6d8; }
+
+.title__start {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + 64 * var(--t));
+  transform: translateX(-50%);
+  width: calc(315 * var(--t));
+  padding: calc(10 * var(--t));
+  border: 0;
+  background: var(--ink-2);
+  color: #fff;
+  font-size: calc(20 * var(--t));
+  font-weight: 700;
+  cursor: pointer;
+}
+.title__start:disabled { cursor: progress; }
+.title__start:not(:disabled):hover,
+.title__start:not(:disabled):focus-visible { background: #000; }
+
+/* ── About ────────────────────────────────────────────────────────────── */
+
+.about {
+  max-width: calc(755 * var(--u));
+  padding: calc(40 * var(--u));
+  border: 1px solid var(--rule);
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: calc(20 * var(--u));
+  line-height: normal;
+}
+.about p + p, .about form { margin-top: 1lh; }
+.about::backdrop { background: rgba(0, 0, 0, 0.4); }
+
+/* ── narrow screens: portrait becomes a band above the text ──────────── */
+
+@media (max-width: 900px) {
+  :root { --u: 0.75px; }
+  .nav, .status { padding-left: 16px; padding-right: 16px; }
+  .nav { gap: 24px; }
   .stage {
-    grid-template-columns: 1fr;
-    grid-template-rows: 40vh 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 26vh minmax(0, 1fr);
   }
-  .portrait {
-    border-right: 0;
-    border-bottom: 1px solid var(--ink);
-  }
-  .portrait img { object-position: center 28%; }
+  .portrait { grid-column: 1; margin: 16px 16px 0; height: calc(100% - 16px); }
+  .transcript { grid-column: 1; padding: 32px 16px 96px; }
+  .transcript__inner { max-width: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-new { animation: none; }
+  .title, .portrait__img { transition: none; }
 }

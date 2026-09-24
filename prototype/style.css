@@ -189,14 +189,18 @@ p { margin: 0; }
 
 .transcript__inner { max-width: calc(935 * var(--lu)); }
 
-/* Rhythm from the Figma blocks:
+/* Rhythm from the Figma blocks (Figma's line and paragraph spacing):
      Location heading          bold
      (blank line)
      body text                 regular
      (blank line)
-     >user input
+     … Del's response ends
      (72 px)
-     next Location heading … */
+     >user input               your turn stands alone
+     (112 px)
+     Del's next response …
+   With no size hierarchy, space around your line is what says
+   "you're speaking now" vs "Del is". */
 
 .entry { margin-bottom: 1lh; }
 .entry p + p { margin-top: 1lh; }
@@ -209,7 +213,10 @@ p { margin: 0; }
 
 .speech { color: var(--speech); }
 
-.entry--say { margin-bottom: calc(72 * var(--u)); }
+.entry--say { margin-top: calc(72 * var(--u)); margin-bottom: calc(112 * var(--u)); }
+
+/* the live input line gets the same space above it as a sent one */
+.prompt { margin-top: calc(72 * var(--u)); }
 .entry--say p::before { content: ">"; }
 
 /* things the Figma doesn't show, drawn only in its own vocabulary */
@@ -229,7 +236,7 @@ p { margin: 0; }
   cursor: pointer;
 }
 
-.entry--ending { margin-top: calc(72 * var(--u)); }
+.entry--ending { margin-top: calc(112 * var(--u)); }
 .ending__title { margin: 0 0 1lh; font-size: inherit; font-weight: 700; }
 
 .entry--debug {
@@ -258,7 +265,6 @@ p { margin: 0; }
 .prompt {
   display: flex;
   align-items: baseline;
-  margin: 0;
 }
 
 .prompt__input {

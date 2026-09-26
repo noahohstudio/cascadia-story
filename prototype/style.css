@@ -205,6 +205,9 @@ p { margin: 0; }
 .entry { margin-bottom: 1lh; }
 .entry p + p { margin-top: 1lh; }
 
+/* a new place starts a new section: an extra blank line above its heading */
+.entry--place:not(:first-child) { margin-top: 3lh; }
+
 .entry__heading {
   margin: 0 0 1lh;
   font-size: inherit;

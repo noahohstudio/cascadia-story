@@ -29,6 +29,7 @@ const els = {
   aboutDialog: $("[data-about-dialog]"),
   mode: $("[data-mode]"),
   rain: $("[data-rain]"),
+  meters: $("[data-meters]"),
 };
 
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -166,6 +167,40 @@ function renderHud() {
   els.location.textContent = h.location;
   els.choices.textContent = `${h.choices} ${h.choices === 1 ? "choice" : "choices"} made`;
   document.body.classList.toggle("is-ended", !!state.ending);
+  renderMeters(h);
+}
+
+// Trust and calm as ten blocks each. On a change: the delta (+1 / −2)
+// appears beside the bar and the blocks that changed flash.
+let shownMeters = null; // null = first draw of a game, no deltas
+function renderMeters(h) {
+  if (!els.meters) return; // meters are switched off in index.html
+  const vals = { trust: h.trust, calm: h.calm };
+  for (const [key, v] of Object.entries(vals)) {
+    const row = els.meters.querySelector(`[data-meter="${key}"]`);
+    const bar = row.querySelector("[data-bar]");
+    const delta = row.querySelector("[data-delta]");
+    const prev = shownMeters ? shownMeters[key] : v;
+    bar.replaceChildren(...Array.from({ length: 10 }, (_, i) => {
+      const cell = document.createElement("span");
+      cell.className = "cell" + (i < v ? " is-on" : "");
+      if (i >= Math.min(prev, v) && i < Math.max(prev, v)) {
+        cell.classList.add("is-flash");
+        cell.style.animationDelay = `${REPLY_PAUSE}ms`;
+      }
+      cell.textContent = i < v ? "█" : "░";
+      return cell;
+    }));
+    if (v !== prev) {
+      delta.textContent = (v > prev ? "+" : "−") + Math.abs(v - prev);
+      delta.classList.remove("is-shown");
+      void delta.offsetWidth; // restart the animation
+      delta.style.animationDelay = `${REPLY_PAUSE}ms`;
+      delta.classList.add("is-shown");
+    }
+    row.setAttribute("aria-label", `${key}: ${v} of 10`);
+  }
+  shownMeters = vals;
 }
 
 /* ── Turns ───────────────────────────────────────────────────────────── */
@@ -249,6 +284,7 @@ function scheduleIdle() {
 function begin() {
   els.log.replaceChildren();
   state = initialState();
+  shownMeters = null;
   const opening = openingLines(state);
   renderLines(opening);
   note("Type anything: what you'd do, or what you'd say.", "note", { queue: true });

@@ -97,6 +97,9 @@ export const carDeaf = [
   `You say it to the windshield. Across the lot, the old man doesn't move. He can't hear you from in here.`,
   `The wipers go back and forth. He won't hear you from the car; you'd have to get out.`,
   `Your voice stays in the car with you. In the booth, the old man watches your headlights and waits.`,
+  `It fogs a small patch of the windshield. That's as far as it gets.`,
+  `The car keeps it. Across the lot, he rubs his eyes and keeps watching the bridge.`,
+  `You might as well be talking to the rain.`,
 ];
 
 /* Said instead of carDeaf once the window is rolled down. He still can't
@@ -124,6 +127,7 @@ export const actions = {
       "go up to the window", "walk to the booth", "knock on the booth window",
       "go over to the bridge", "get out and talk to the man", "leave the car",
       "unbuckle and get out", "step out into the rain", "walk over to the old man",
+      "I leave the car and go stand by the booth", "hop out", "exit the car",
       "go knock on his window", "get out and walk over", "head over to the booth on foot",
     ],
     where: "car",
@@ -341,6 +345,18 @@ It's written more than once, on more than one night.`,
     elsewhere: `The logbook's on the counter in the booth.`,
   },
 
+  look_lever: {
+    cues: [
+      "look at the lever", "examine the lever", "what's that lever", "inspect the lever",
+      "what does the lever do",
+    ],
+    where: "any",
+    lines: [
+      `Iron, taller than he is sitting down, with a wooden grip worn pale where his hand goes. It's the only thing in the booth that looks newer than him.`,
+      `The lever. His hand is never very far from it.`,
+    ],
+  },
+
   lever: {
     minScore: 0.6, // needs a confident match
     cues: [
@@ -357,6 +373,7 @@ It's written more than once, on more than one night.`,
   },
 
   look_bridge: {
+    cycle: true, // scenery: keep offering fresh lines, then repeat
     cues: [
       "look at the bridge", "examine the bridge", "how does the bridge work",
       "look at the raised deck",
@@ -365,10 +382,12 @@ It's written more than once, on more than one night.`,
     lines: [
       `Two steel leaves, painted a green that's mostly rust now, raised to maybe sixty degrees. Between them the creek runs high and brown. A sign bolted to the near leaf is too faded to read, except for the word CLOSED, which looks newer than the rest.`,
       `The bridge holds itself up against the rain. It looks like it's been doing that a long time.`,
+      `Rust runs down the green paint in long stripes, like the bridge has been crying for years.`,
     ],
   },
 
   look_river: {
+    cycle: true, // scenery: keep offering fresh lines, then repeat
     cues: [
       "look at the river", "look at the creek", "look at the water", "look down at the creek",
     ],
@@ -376,6 +395,7 @@ It's written more than once, on more than one night.`,
     lines: [
       `Hollis Creek, running fast with the rain. On the far bank the road starts again and runs east into trees going black.`,
       `The water is louder than it was. On the far side, the road waits.`,
+      `Brown water, fast, carrying a branch under the bridge and away.`,
     ],
   },
 
@@ -404,10 +424,10 @@ export const moves = {
   greet: {
     cues: [
       "hello", "hi there", "good evening", "hey", "hi", "how are you",
-      "evening sir", "howdy", "hello sir",
+      "evening sir", "howdy", "hello sir", "sup", "yo", "what's up", "hey there old timer",
     ],
     lines: {
-      present: [`“Evening.”`],
+      present: [`“Evening.”`, `“Evening,” he says again, almost warm.`, `He lifts two fingers off the counter. Hello.`],
       wandering: [
         `“Evening. You're late.” He frowns. “No. You're not. Evening.”`,
         `A nod. “Evening.”`,
@@ -420,14 +440,15 @@ export const moves = {
     cues: [
       "take your time", "I'm listening", "no rush", "I'm in no hurry", "I've got all night",
       "I'll wait as long as you need", "whenever you're ready", "it's okay, go ahead",
-      "I'm not going anywhere", "there's no hurry",
+      "I'm not going anywhere", "there's no hurry", "all good, I've got time", "I'm happy to wait",
+      "I got time", "it's all good",
     ],
     fx: { agitation: -1, trust: +1 },
     lines: [
       `“Hn.” He settles a little on his stool. “Most people are in a hurry.”`,
       `He looks at you properly, maybe for the first time. “All right.”`,
     ],
-    tired: [`“You keep saying that.” Not unkind.`],
+    tired: [`“You keep saying that.” Not unkind.`, `He nods. He believes you.`, `“I know,” he says. “You're not in a hurry. I heard.”`],
   },
 
   wait: {
@@ -436,7 +457,7 @@ export const moves = {
       "listen to the rain", "keep him company", "stay a while", "just stand with him",
     ],
     anywhere: true,
-    trustCap: 1,
+    trustCap: 2,
     fx: { agitation: -1, trust: +1 },
     lines: {
       any: [
@@ -461,6 +482,8 @@ export const moves = {
       "I know what it's like to miss someone", "I had a fight with my father once",
       "I left home young too", "I've been driving for hours, I'm tired",
       "my family doesn't really talk anymore", "I lost someone too", "I miss my dad",
+      "my grandpa used to get confused like that", "my grandma had dementia", "I used to sit with my grandmother",
+      "been driving forever, kinda lost", "I've been on the road all day",
       "I miss my father", "I miss my family", "I think about my own parents",
     ],
     fx: { agitation: -1, trust: +1, set: { shared: true } },
@@ -468,27 +491,30 @@ export const moves = {
       `He listens to all of it. Nods once at the end, like you've paid something.`,
       `“Yeah,” he says. “Yeah. That's how it goes.”`,
     ],
-    tired: [`He nods. He heard you the first time, and it counted.`],
+    tired: [`He nods. He heard you the first time, and it counted.`, `“Yeah,” he says. “You said.”`, `He's quiet a while after that.`],
   },
 
   comfort: {
     cues: [
       "that must be hard", "I'm sorry", "that sounds lonely", "you must miss him",
       "that's a long time to wait", "you did your best", "I'm sorry that happened",
-      "that sounds really painful",
+      "that sounds really painful", "sorry", "sorry man", "I'm so sorry", "that sucks",
+      "that's sad", "damn, that's rough", "that's rough", "oh no", "that's awful",
+      "comfort him", "put a hand on his shoulder", "I feel for you",
     ],
     fx: { agitation: -1, trust: +1 },
     lines: [
       `He doesn't say anything. But he doesn't close the window either.`,
       `“Don't,” he says. But it's quiet, and it doesn't mean don't.`,
     ],
-    tired: [`He nods, just barely.`],
+    tired: [`He nods, just barely.`, `“Yeah,” he says quietly.`, `He looks at his hands.`],
   },
 
   apologize: {
     cues: [
       "sorry for honking", "I didn't mean to yell", "I apologize, that was rude",
-      "my bad", "sorry about that", "I shouldn't have said that", "forgive me",
+      "my bad", "sorry for being rude", "I shouldn't have said that", "forgive me",
+      "sorry, I didn't mean that", "sorry for pushing",
     ],
     trustCap: 0,
     fx: { agitation: -2 },
@@ -506,7 +532,7 @@ export const moves = {
     trustCap: 1,
     fx: { trust: +1 },
     lines: [`“Thirty-one years,” he says. “Painted her twice.” It's almost pride.`],
-    tired: [`“She's all right,” he says.`],
+    tired: [`“She's all right,” he says.`, `He pats the counter, like it's the bridge.`, `“Needs paint,” he says. “Always needs paint.”`],
   },
 
   step_in: {
@@ -520,10 +546,11 @@ export const moves = {
       `“Gas is ninety-five cents and they call that robbery.” He almost smiles. “Mariners are hopeless. Always hopeless.”`,
       `“New highway's going in, they say. Spring. Then nobody'll need this road.” He looks at the bridge. “Somebody will.”`,
     ],
-    tired: [`“Same as always,” he says. “Nothing changes out here.”`],
+    tired: [`“Same as always,” he says. “Nothing changes out here.”`, `“Quiet,” he says. “It's always quiet.”`, `He shrugs. “You'd know better than me. You're the one driving through.”`],
   },
 
   push: {
+    minScore: 0.6, // needs a confident match
     cues: [
       "just lower the bridge", "open the bridge now", "hurry up", "come on, let me through",
       "I don't have time for this", "this is ridiculous", "I need to get across right now",
@@ -589,6 +616,19 @@ export const moves = {
     ],
   },
 
+  not_wes: {
+    cues: [
+      "I'm not Wes", "I'm not your son", "no, I'm not him", "I'm not him, I'm sorry",
+      "sorry, I'm not Wes", "I know I'm not Wes",
+    ],
+    trustCap: 1,
+    fx: { agitation: -1, trust: +1 },
+    lines: [
+      `“No,” he says. “No. I know that.” He sounds almost grateful you said it.`,
+      `He nods slowly. “I know.”`,
+    ],
+  },
+
   flatter: {
     cues: [
       "you're the best bridge keeper ever", "you seem like a really wise man",
@@ -646,6 +686,21 @@ export const moves = {
       `“Radio's broke,” he says, which might be an answer to something.`,
       `He thinks about it for longer than you'd expect. “Coffee,” he says finally. “I like coffee.”`,
     ],
+  },
+
+  ack: {
+    cues: [
+      "ok", "okay", "cool", "k", "lol", "lol ok", "alright", "I see", "hm", "interesting",
+      "this is weird", "this is strange", "I don't know what to say", "what is going on",
+    ],
+    trustCap: 0,
+    lines: [
+      `“Hn.”`,
+      `He nods, as if that settles something.`,
+      `Neither of you says anything for a moment.`,
+      `He waits to see if there's more.`,
+    ],
+    inCar: [`You sit with that. The wipers go back and forth.`],
   },
 
   goodnight: {
@@ -709,7 +764,9 @@ export const topics = {
 
   bridge: {
     label: "the bridge",
+    climb: "highest", // once he trusts you, one ask is enough
     cues: [
+      "bridge?", "ask about the bridge", "why won't you lower the bridge", "what's with the bridge",
       "why is the bridge up", "why won't you lower it", "what's going on with the bridge",
       "is the bridge broken", "why is it raised", "why do you keep the bridge up",
       "what's the bridge up for",
@@ -728,7 +785,7 @@ export const topics = {
     ],
     again: [
       { need: { reveal: "why_up" }, text: `“I told you. So they stop.”` },
-      { text: `“Ten to eight,” he says again. “Every night.”` },
+      { text: [`“Ten to eight,” he says again. “Every night.”`, `“It goes up,” he says. “That's all.”`, `He looks up at it with you, like he's checking it's still there.`] },
     ],
   },
 
@@ -743,6 +800,9 @@ export const topics = {
       "could you open the bridge", "would you open the bridge please", "could you open it for me",
       "is it possible to lower the bridge", "would you mind letting me across",
       "lower the bridge", "lower bridge", "open bridge", "open the bridge please",
+      "could I cross whenever you're ready", "do you think you might lower it",
+      "whenever you're ready, could you lower it", "any chance you could lower it",
+      "can I go now", "am I allowed to cross", "when can I go",
       "let me pass please", "I want to cross",
     ],
     responses: [
@@ -764,6 +824,8 @@ He looks at his hands on the lever like they belong to someone else. The leaf ha
       { need: { reveal: "last_words" }, text: `“What would I even say to him,” he says. He isn't talking to you.` },
       { need: { flag: "false_lowering" }, text: `“Soon,” he says. “There's something I'm meant to… soon.”` },
       { text: `“Bridge is up.”` },
+      { text: `He looks at the lever, then away. “Not tonight.”` },
+      { text: `“It's up,” he says, gentler than before.` },
     ],
   },
 
@@ -791,7 +853,7 @@ He looks at his hands on the lever like they belong to someone else. The leaf ha
     cues: [
       "tell me about Wes", "tell me about your son", "what's your son like", "do you have kids",
       "is that your son in the picture", "tell me about your boy", "what's Wes like",
-      "what does Wes do",
+      "what does Wes do", "your son?", "you have a son?", "who's Wes",
     ],
     locked: [
       { need: { reveal: "why_up" }, text: `He opens his mouth, then shuts it. “Who's asking?”` },
@@ -847,7 +909,7 @@ He looks at his hands on the lever like they belong to someone else. The leaf ha
         text: `“Eighty-seven.” A look. “Where've you been driving from, that you don't know that?”`,
       },
     ],
-    again: [`“October fourteenth,” he says. “Same as it was.”`],
+    again: [`“October fourteenth,” he says. “Same as it was.”`, `He taps the logbook. The date at the top of the page. “Fourteenth.”`, `“Same day it's been,” he says, and doesn't seem to hear it.`],
   },
 
   keeper_job: {
@@ -855,6 +917,7 @@ He looks at his hands on the lever like they belong to someone else. The leaf ha
     cues: [
       "how long have you worked here", "do you like this job", "do you get many cars",
       "is it lonely out here", "what's it like keeping a bridge", "how many cars come through",
+      "do you like working here", "how long have you been here",
     ],
     responses: [
       `“Thirty-one years.”`,
@@ -864,7 +927,7 @@ He looks at his hands on the lever like they belong to someone else. The leaf ha
         text: `“Lonely.” He tries the word out. “No. You'd have to be waiting on nothing to be lonely.”`,
       },
     ],
-    again: [`“It's a job,” he says.`],
+    again: [`“It's a job,” he says.`, `“Long enough,” he says.`, `“You ask a lot about the job,” he says, not unkindly.`],
   },
 
   weather: {
@@ -877,7 +940,7 @@ He looks at his hands on the lever like they belong to someone else. The leaf ha
       `“Rain till morning.”`,
       { need: { trust: 1 }, text: `“Same as that night.” He doesn't say which night.` },
     ],
-    again: [`“Rain,” he agrees.`],
+    again: [`“Rain,” he agrees.`, `He looks at it with you for a while.`, `“It'll keep,” he says.`],
   },
 
   creek: {
@@ -983,7 +1046,7 @@ He doesn't say what he thinks it is. You don't ask.`,
         text: `He opens his mouth. Closes it. “I don't have it yet,” he says. “I had it. I don't have it yet.”`,
       },
       { need: { reveal: "wes" }, text: `“Nothing he doesn't know.” He says it too fast. His eyes go to the circled line in the logbook, and away.` },
-      { text: `“Say to who?”` },
+      { text: [`“Say to who?”`, `He looks at you, puzzled. “Tell who what?”`, `“I don't follow,” he says.`] },
     ],
     responses: [
       {
@@ -1011,6 +1074,13 @@ He puts both hands on the lever, and pulls, and doesn't stop.`,
 
 export const beats = [
   {
+    // you asked about the bridge; he's come to trust you; he tells you anyway
+    id: "volunteers_why",
+    need: { place: "booth", flag: "asked_bridge", trust: 3, notReveal: "why_up" },
+    fx: { reveal: "why_up" },
+    text: `He's quiet a while. Then, not quite to you: “Keep it up, anybody coming across has to stop. Right here, at this window.” He looks at the far side. “I get a look at every one of 'em.”`,
+  },
+  {
     id: "ask_name",
     need: { place: "booth", boothTurns: 2, notFlag: "asked_name" },
     fx: { set: { asked_name: true }, pending: { type: "name" } },
@@ -1031,6 +1101,14 @@ export const beats = [
     text: `He frowns at you, suddenly unsure. “Sorry. What'd you say your name was?” A beat. “It's not Wes. I know it's not Wes.”`,
   },
   {
+    // Option A: if you never ask what he'd say, he asks you. Any honest
+    // answer opens the ending; only a harsh one closes it again.
+    id: "asks_you",
+    need: { place: "booth", reveal: "last_words", trust: 5, since: { flag: "revealed_last_words", turns: 4 }, notFlag: "asked_you" },
+    fx: { set: { asked_you: true }, pending: { type: "invite" } },
+    text: `He's quiet for a long time. Then, without looking at you: “You ever have something you should've said to somebody?”`,
+  },
+  {
     id: "rehearsing",
     need: { place: "booth", reveal: "last_words", trust: 4 },
     text: `He's looking at the far bank again, lips moving a little, like he's practising something he means to say.`,
@@ -1045,6 +1123,7 @@ export const answers = {
   name_annoyed: `“Well, tell me again, then,” he snaps. Then, quieter: “Tell me again.”`,
   name_refused: `“Suit yourself.”`,
   name_volunteered: `“{name}.” He nods. “All right.”`,
+  name_ask_back: `“Del,” he says, as if you should have known.`,
 
   son_yes: `His whole face opens. Then he looks, really looks, and it closes again, slower than it opened. “No,” he says. “No. Wes had his mother's eyes.” He sits down heavily. “That's a cruel thing. That's a cruel thing to do.”`,
   son_no: `“No,” he says. “No. Course not.” He sits back down, slowly. “Sorry. The light. You looked—” He shakes his head. “He'd be older than you by now. Wouldn't he.”
@@ -1058,12 +1137,21 @@ It's the clearest thing he's said all night. Then it's gone again, and he's watc
   remind_harsh: `“Don't you shout at me.” He shoves the lever home and the leaf groans back up into the rain. His hands won't stop shaking.`,
   remind_other: `“…Right.” He pushes the lever back up. The leaf rises. “Not yet.”`,
 
+  invite_yes: `“Yeah,” he says. “Then you know.”`,
+  invite_no: `“Lucky,” he says. He almost means it.`,
+  invite_other: `He nods, as if you've answered him anyway.`,
+  invite_harsh: `“Forget it.” He turns back to the window. Whatever was open in him closes, for now.`,
+
   warning: `The pane slides almost shut. Through the last inch, without looking at you: “I think you'd better go.”`,
 
   leave_prompt: `Turn around and leave?`,
   leave_no: `You fold the map again. Not yet.`,
 
   mishear: `“Eh?” He leans toward the gap. “You asking about {label}?”`,
+  follow_nothing: [
+    `“Go on about what?” he says.`,
+    `He waits. “About what, now?”`,
+  ],
   mishear_no: `“Hm. Then I didn't catch it. Rain's loud.”`,
 };
 
@@ -1114,8 +1202,9 @@ export const fallback = {
 /* NUDGES: quiet help when the player is stuck. After two misses in a row
    (or a long stretch with nothing new, or a long silence) the story points
    toward the next thing: `subtle` is narration only, never an instruction;
-   `clearer` comes only if they keep missing. The first entry whose `need`
-   passes is used, so order = the story's order. */
+   `clearer` comes only if they keep missing.
+   Checked FURTHEST-FIRST: the first entry whose `need` passes is used, so a
+   player who heard about Wes early is pointed forward, never back. */
 export const nudges = [
   {
     need: { place: "car" },
@@ -1134,55 +1223,15 @@ export const nudges = [
     clearer: `Whatever you're doing, it's making him worse. Go gently, or just wait with him.`,
   },
   {
-    need: { notReveal: "why_up", flag: "asked_bridge", trustBelow: 2 },
+    need: { reveal: "last_words", trust: 5 },
     subtle: [
-      `He isn't a man to be hurried. The heater ticks. He seems to be waiting to see if you'll wait.`,
-      `He watches you the way you'd watch weather: to see what kind it is.`,
+      `His lips move a little, like he's practising what he'd say to someone.`,
+      `He looks at the far bank as if someone were standing on it.`,
     ],
-    clearer: `Questions aren't getting far. Patience might.`,
+    clearer: `He never got to say it to Wes. You could ask him what he'd say.`,
   },
   {
-    need: { notReveal: "why_up" },
-    subtle: [
-      `He glances up at the raised bridge, the way you'd check a clock.`,
-      `The two halves of the bridge stand up against the sky. He keeps looking at them.`,
-    ],
-    clearer: `He might tell you why the bridge is up. He might need asking more than once.`,
-  },
-  {
-    need: { notReveal: "wes", notFlag: "saw_photo" },
-    subtle: [
-      `His eyes go to the photograph taped to the glass, then away.`,
-      `The photograph on the window has been handled a lot. The tape's been replaced more than once.`,
-    ],
-    clearer: `There's a photograph taped inside the booth window.`,
-  },
-  {
-    need: { notReveal: "wes" },
-    subtle: [
-      `He looks up the far road again. Whoever he's watching for, they're late.`,
-      `Every set of headlights on the far bank, he leans forward a little.`,
-    ],
-    clearer: `He's waiting for someone. You could ask who.`,
-  },
-  {
-    need: { notReveal: "last_words", trustBelow: 4 },
-    subtle: [
-      `He says the name carefully when he says it, like it could break.`,
-      `Something in him opens a little whenever you stop asking and just stay.`,
-    ],
-    clearer: `He'll need to trust you before he tells the rest. Stay a while. Share something of your own.`,
-  },
-  {
-    need: { notReveal: "last_words" },
-    subtle: [
-      `His hand rests on the logbook, over the page with the circle on it.`,
-      `He keeps starting a sentence about that night, and stopping.`,
-    ],
-    clearer: `Something happened the night Wes left. You could ask him about it.`,
-  },
-  {
-    need: { trustBelow: 5 },
+    need: { reveal: "last_words" },
     subtle: [
       `He's gone quiet. He still hasn't said the thing he stopped on.`,
       `He looks at you like he's deciding something.`,
@@ -1190,12 +1239,53 @@ export const nudges = [
     clearer: `He isn't done. Stay with him a little longer.`,
   },
   {
+    need: { reveal: "wes", trust: 4 },
+    subtle: [
+      `His hand rests on the logbook, over the page with the circle on it.`,
+      `He keeps starting a sentence about that night, and stopping.`,
+    ],
+    clearer: `Something happened the night Wes left. You could ask him about it.`,
+  },
+  {
+    need: { reveal: "wes" },
+    subtle: [
+      `He says the name carefully when he says it, like it could break.`,
+      `Something in him opens a little whenever you stop asking and just stay.`,
+    ],
+    clearer: `He'll need to trust you before he tells the rest. Stay a while. Share something of your own.`,
+  },
+  {
+    need: { reveal: "why_up", notFlag: "saw_photo" },
+    subtle: [
+      `His eyes go to the photograph taped to the glass, then away.`,
+      `The photograph on the window has been handled a lot. The tape's been replaced more than once.`,
+    ],
+    clearer: `There's a photograph taped inside the booth window.`,
+  },
+  {
+    need: { reveal: "why_up" },
+    subtle: [
+      `He looks up the far road again. Whoever he's watching for, they're late.`,
+      `Every set of headlights on the far bank, he leans forward a little.`,
+    ],
+    clearer: `He's waiting for someone. You could ask who.`,
+  },
+  {
+    need: { flag: "asked_bridge", trustBelow: 2 },
+    subtle: [
+      `He isn't a man to be hurried. The heater ticks. He seems to be waiting to see if you'll wait.`,
+      `He watches you the way you'd watch weather: to see what kind it is.`,
+    ],
+    clearer: `Questions aren't getting far. Patience might.`,
+  },
+  {
     need: {},
     subtle: [
-      `His lips move a little, like he's practising what he'd say to someone.`,
-      `He looks at the far bank as if someone were standing on it.`,
+      `He glances up at the raised bridge, the way you'd check a clock.`,
+      `The two halves of the bridge stand up against the sky. He keeps looking at them.`,
+      `Every so often his eyes go up to the raised deck, then back to you, like the two are connected.`,
     ],
-    clearer: `He never got to say it to Wes. You could ask him what he'd say.`,
+    clearer: `He might tell you why the bridge is up. Ask more than once.`,
   },
 ];
 

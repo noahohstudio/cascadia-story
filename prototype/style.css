@@ -130,12 +130,48 @@ p { margin: 0; }
   overflow: hidden;
 }
 
-.portrait {
+/* the portrait column: Del, then the meters under him */
+.rail {
   grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  gap: calc(28 * var(--u));
+  min-height: 0;
+  padding: calc(48 * var(--u)) 0 calc(40 * var(--u));
+}
+
+.portrait {
   position: relative;
-  margin: calc(48 * var(--u)) 0 0;
-  height: min(calc(836 * var(--u)), calc(100% - 48 * var(--u)));
+  flex: 0 1 calc(836 * var(--u));
+  min-height: 0;
+  margin: 0;
   overflow: hidden;
+}
+
+/* ── meters: trust and calm, as rows of blocks ──────────────────────────
+     trust  ██████░░░░  +1
+     calm   ████░░░░░░  −2                                                  */
+
+.meters { flex: none; display: grid; gap: calc(6 * var(--u)); }
+
+.meter { display: flex; align-items: baseline; gap: 2ch; white-space: pre; }
+.meter__label { width: 5ch; color: var(--quiet); }
+.meter__bar { color: var(--ink); letter-spacing: 0.08em; }
+.meter__bar .cell:not(.is-on) { color: var(--quiet); opacity: 0.45; }
+.meter__delta { min-width: 3ch; font-weight: 700; opacity: 0; }
+
+/* what changed this turn: the delta appears, the changed blocks flash */
+.meter__delta.is-shown { animation: delta 2.6s var(--ease) both; }
+@keyframes delta {
+  0%   { opacity: 0; transform: translateY(4px); }
+  15%  { opacity: 1; transform: none; }
+  70%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+.cell.is-flash { animation: flash 1.6s var(--ease) both; }
+@keyframes flash {
+  0%, 40% { color: var(--ink); opacity: 1; text-shadow: 0 0 0.6em currentColor; }
+  100%    { text-shadow: none; }
 }
 
 .portrait__img {
@@ -376,12 +412,16 @@ p { margin: 0; }
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: 20vh minmax(0, 1fr);
   }
-  .portrait { grid-column: 1; margin: 16px 16px 0; height: calc(100% - 16px); }
+  .rail { grid-column: 1; flex-direction: row; align-items: flex-end; gap: 16px; padding: 12px 16px 10px; overflow: hidden; border-bottom: 1px solid var(--rule); }
+  .portrait { flex: 1 1 auto; align-self: stretch; height: auto; }
+  .portrait__img { object-position: left top; }
+  .meters { padding-bottom: 4px; }
   .transcript { grid-column: 1; padding: 32px 16px 96px; }
   .transcript__inner { max-width: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .is-new { animation: none; }
+  .is-new, .meter__delta.is-shown, .cell.is-flash { animation: none; }
+  .meter__delta.is-shown { opacity: 1; }
   .title, .portrait__img { transition: none; }
 }

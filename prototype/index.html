@@ -36,11 +36,20 @@
   </div>
 
   <div class="stage">
-    <figure class="portrait" data-portrait>
-      <div class="portrait__sky"></div>
-      <canvas class="portrait__rain" data-rain aria-hidden="true"></canvas>
-      <img class="portrait__img" src="del.png" alt="Del" width="1480" height="2477">
-    </figure>
+    <div class="rail">
+      <figure class="portrait" data-portrait>
+        <div class="portrait__sky"></div>
+        <canvas class="portrait__rain" data-rain aria-hidden="true"></canvas>
+        <img class="portrait__img" src="del.png" alt="Del" width="1480" height="2477">
+      </figure>
+      <!-- Trust/calm meters are switched off for now (more mystery without
+           them). To bring them back, put this inside .rail:
+      <div class="meters" data-meters>
+        <div class="meter" data-meter="trust"><span class="meter__label">trust</span><span class="meter__bar" data-bar></span><span class="meter__delta" data-delta aria-hidden="true"></span></div>
+        <div class="meter" data-meter="calm"><span class="meter__label">calm</span><span class="meter__bar" data-bar></span><span class="meter__delta" data-delta aria-hidden="true"></span></div>
+      </div>
+      -->
+    </div>
 
     <main class="transcript" data-transcript>
       <div class="transcript__inner">

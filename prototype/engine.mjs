@@ -20,6 +20,7 @@ import * as C from "./content.mjs";
 // Between NEAR_MISS and the threshold, Del half-hears a topic and checks.
 export const MATCH_THRESHOLD = 0.46;
 export const NEAR_MISS = 0.38;
+const TRUST_MIN = 0.55;
 
 // Del's own moments (asking your name, mistaking you for Wes…) need at
 // least this many turns between them, so they land one at a time.
@@ -58,6 +59,8 @@ export function hud(s) {
   const minutes = C.meta.startMinutes + s.turn * C.meta.minutesPerTurn;
   return {
     mood: moodFor(s.agitation),
+    trust: s.trust,
+    calm: 10 - s.agitation,
     location: C.places[s.place].heading,
     choices: s.turn,
     clock: clock(minutes),
@@ -85,7 +88,20 @@ const YES = /^(yes|yeah|yep|yup|ya|sure|ok|okay|uh huh|i do|i am|it's me|its me|
 const NO = /^(no|nope|nah|n|not really|i'm not|im not|i am not|sorry,? no)\b/;
 const HARSH = /(old man|crazy|senile|obviously|idiot|stupid|what's wrong with you|hurry|come on|just (lower|open|do)|ridiculous)/;
 const GENTLE = /(it's ok|its ok|it's okay|that's ok|no rush|take your time|it's fine|you were|you're okay|it's alright|easy)/;
-const FOLLOW_UP = /^(why|how come|huh|what do you mean|go on|and|and then|then what|tell me more|keep going|really|what happened|what else|more|continue)\??!?$/;
+const NEGATION = /\b(not|no|nah|never|isn'?t|aren'?t|ain'?t)\b|n't\b/;
+const POLITE = /\b(please|pls|could|would|whenever|when you'?re ready|if you can|mind|possible|may i|any chance|might)\b/;
+// "why?", "go on", "wdym", "tell me more"… asked about the last topic.
+// Matched on the words only (punctuation stripped), whole input.
+const FOLLOW_UP = new RegExp("^(?:(?:ok|okay|so|and|but|oh|hm+|wait|please|hey)\\s+)?(?:" + [
+  "why", "why tho", "why though", "why is that", "why not", "why's that", "how come", "how so",
+  "huh", "wdym", "what do you mean", "what does that mean", "meaning", "what", "wait what",
+  "go on", "go ahead", "keep going", "continue", "carry on", "and", "and then", "then what",
+  "what happened", "what happened next", "what then", "what else", "more", "tell me more",
+  "say more", "could you tell me more", "can you tell me more", "tell me", "really", "for real",
+  "seriously", "is that right", "i'm listening", "im listening", "keep going i'm listening",
+  "i'm listening go on", "please go on", "go on please", "and what", "like what", "such as",
+].join("|") + ")(?:\\s+(?:please|then|tho|though|man|del|sir))?$");
+const words = (t) => t.toLowerCase().replace(/[^a-z' ]/g, " ").replace(/\s+/g, " ").trim();
 
 export function quickTurn(state, raw) {
   if (state.ending) return null;
@@ -120,15 +136,20 @@ export function quickTurn(state, raw) {
   }
 
   // 3. "why?" / "go on": ask the last topic again, which climbs its ladder
-  if (FOLLOW_UP.test(input) && s.lastTopic && s.place === "booth") {
-    doTopic(s, C.topics[s.lastTopic], s.lastTopic, out);
-    return finish(s, out, { path: `follow-up:${s.lastTopic}` });
+  if (FOLLOW_UP.test(words(fixTypos(raw))) && s.place === "booth") {
+    if (s.lastTopic) {
+      doTopic(s, C.topics[s.lastTopic], s.lastTopic, out);
+      return finish(s, out, { path: `follow-up:${s.lastTopic}` });
+    }
+    out.push({ kind: "text", text: pick(s, "fu:none", C.answers.follow_nothing) });
+    return finish(s, out, { path: "follow-up:none" });
   }
 
   // 4. volunteering a name at any time
-  const volunteered = raw.match(/\b(?:my name is|my name's|name's|call me)\s+([a-z][a-z'-]*)/i);
+  const volunteered = volunteeredName(raw);
   if (volunteered && s.place === "booth") {
-    setName(s, volunteered[1], out, C.answers.name_volunteered);
+    setName(s, volunteered.name, out, C.answers.name_volunteered);
+    if (volunteered.askedBack) out.push({ kind: "text", text: C.answers.name_ask_back });
     return finish(s, out, { path: "name:volunteered" });
   }
 
@@ -150,8 +171,10 @@ function answerPending(s, raw, input, out) {
       out.push({ kind: "text", text: fill(C.answers.name_refused, s) });
       return "name:refused";
     }
-    const name = extractName(raw);
-    if (name) {
+    const got = extractName(raw);
+    if (got) {
+      const name = got.name;
+      if (got.askedBack) s.flags.asked_back = true;
       s.pending = null;
       if (p.again && s.name) {
         if (name.toLowerCase() === s.name.toLowerCase()) {
@@ -167,6 +190,7 @@ function answerPending(s, raw, input, out) {
         return "name:again";
       }
       setName(s, name, out, C.answers.name_first);
+      if (got.askedBack) out.push({ kind: "text", text: C.answers.name_ask_back });
       s.trust = clamp(s.trust + 1);
       return "name:first";
     }
@@ -218,6 +242,24 @@ function answerPending(s, raw, input, out) {
     }
   }
 
+  if (p.type === "invite") {
+    // he asked if you've ever had something you should've said
+    s.pending = null;
+    if (HARSH.test(input)) {
+      s.agitation = clamp(s.agitation + 2);
+      s.flags.asked_you = false; // he may try again later
+      s.flags["beat_asks_you"] = false;
+      s.flags.revealed_last_words = s.turn;
+      out.push({ kind: "text", text: C.answers.invite_harsh });
+      return "invite:harsh";
+    }
+    const reply = YES.test(input) ? C.answers.invite_yes : NO.test(input) ? C.answers.invite_no : C.answers.invite_other;
+    out.push({ kind: "text", text: reply });
+    out.push({ kind: "text", text: fill(C.topics.tell_him.responses[0].text, s) });
+    s.ending = "lowered";
+    return "invite:open";
+  }
+
   if (p.type === "remind") {
     // any reply resolves the false lowering; how he takes it depends on tone
     s.pending = null;
@@ -243,21 +285,47 @@ const NOT_NAMES = new Set(
   ("why what who how no yes nope yeah hi hello hey um uh well i it the a an you your bridge please sure " +
    "okay ok nobody nothing someone just lost tired sorry wes dad son here there fine good from not " +
    "going trying heading driving cold wet late new only still so really sir del go on and tell look " +
+   "lost confused listening waiting stuck hungry scared alright okay back home ready done leaving " +
+   "staying curious serious kidding joking happy sad great glad fine ok sure worried freezing " +
+   "cold tired sorry glad afraid looking trying not also too very kinda pretty in on at from with " +
+   "gonna going heading passing new around nobody someone somebody here there human person " +
+   "weird strange crazy insane fun bored cool good bad sick wet soaked late early done just " +
    "ask get me my can thanks thank wait help").split(" "),
 );
 
+// "Noah, you?" / "Noah. What's yours?": a name, then asking back.
+const ASK_BACK = /[\s,.!-]*(?:and\s+)?(?:u|you|yours|what'?s yours|what about you|how about you|what'?s your name|and yours)\s*\?+\s*$/i;
+
+// Returns { name, askedBack } or null.
 function extractName(raw) {
-  const text = raw.trim();
-  if (text.includes("?") || FOLLOW_UP.test(norm(raw))) return null;
-  const m = text.match(/\b(?:my name is|my name's|name's|i'm|im|i am|it's|its|call me|it is)\s+([a-z][a-z'-]*)/i);
+  let text = fixTypos(raw).trim();
+  if (FOLLOW_UP.test(words(text))) return null;
+  let askedBack = false;
+  if (ASK_BACK.test(text)) { text = text.replace(ASK_BACK, ""); askedBack = true; }
+  if (text.includes("?")) return null;
+  const m = text.match(/\b(?:my name is|my name's|name's|names|name is|i'm|i am|it's|its|call me|it is|this is)\s+([a-z][a-z'-]*)/i);
   let word = m ? m[1] : null;
   if (!word) {
-    const words = text.replace(/[.,!]/g, "").split(/\s+/);
-    if (words.length > 3) return null;
-    word = words[0];
+    const ws = text.replace(/[.,!]/g, " ").trim().split(/\s+/);
+    if (ws.length > 3) return null;
+    word = ws[0];
   }
   if (!word || NOT_NAMES.has(word.toLowerCase()) || word.length > 20) return null;
-  return word[0].toUpperCase() + word.slice(1).toLowerCase();
+  return { name: word[0].toUpperCase() + word.slice(1).toLowerCase(), askedBack };
+}
+
+// Introducing yourself without being asked: "names noah", "I'm Noah."
+function volunteeredName(raw) {
+  let text = fixTypos(raw).trim();
+  let askedBack = false;
+  if (ASK_BACK.test(text)) { text = text.replace(ASK_BACK, ""); askedBack = true; }
+  const m = text.match(/\b(?:my name is|my name's|the name's|name's|names|name is|call me)\s+([a-z][a-z'-]*)/i)
+    ?? text.match(/^(?:(?:hi|hey|hello|evening)[,!.]?\s+)?(?:i'm|i am)\s+([a-z][a-z'-]*)(?:[.!,]\s*.*)?$/i);
+  if (!m || NOT_NAMES.has(m[1].toLowerCase())) return null;
+  const introduced = /\b(?:name|call me)\b/i.test(text);
+  const shortLine = text.replace(/^(?:hi|hey|hello|evening)[,!.]?\s+/i, "").split(/\s+/).length <= 3;
+  if (!introduced && !/^[A-Z]/.test(m[1]) && !shortLine) return null; // "im chillin, no hurry"
+  return { name: m[1], askedBack };
 }
 
 function setName(s, name, out, line) {
@@ -269,7 +337,7 @@ function setName(s, name, out, line) {
 
 /* Classic IF shorthand, rewritten so the matcher understands it. */
 export function forMatching(raw) {
-  return raw.trim().replace(/^(x|examine|inspect|l at|look)\s+(?!at\b|around\b)/i, "look at ");
+  return fixTypos(raw).trim().replace(/^(x|examine|inspect|l at|look)\s+(?!at\b|around\b)/i, "look at ");
 }
 
 /* ---------------------------------------------------------------------
@@ -305,6 +373,25 @@ export function resolveTurn(state, raw, m) {
     m = { ...alt, runnersUp: m.runnersUp, swappedFrom: m.id };
   }
 
+  // Kindness must never be misread as cruelty. The model mostly ignores
+  // "not", so check the words themselves:
+  //   "I'm not Wes" is honest, not a lie; "your son?" is a question about Wes
+  //   a polite request to cross is a request, not pushing
+  const said = norm(raw);
+  if (m.id === "lie_son") {
+    if (NEGATION.test(said)) m = { ...m, kind: "move", id: "not_wes", rerouted: "lie_son" };
+    else if (said.includes("?")) m = { ...m, kind: "topic", id: "wes", rerouted: "lie_son" };
+  }
+  if (m.id === "push" && POLITE.test(said)) m = { ...m, kind: "topic", id: "cross", rerouted: "push" };
+
+  // moves that earn trust need a confident match ("cool" isn't thanks)
+  const mv = m.kind === "move" ? C.moves[m.id] : null;
+  if (mv && (mv.fx?.trust ?? 0) > 0 && !m.rerouted && score < TRUST_MIN) {
+    out.push({ kind: "text", text: fallbackLine(s) });
+    missed(s, out);
+    return finish(s, out, { path: `unsure:${m.kind}:${m.id}`, match: m });
+  }
+
   // high-stakes things (leaving, lying, grabbing the lever) need a confident match
   const item = { action: C.actions, move: C.moves, topic: C.topics }[m.kind][m.id];
   if (item.minScore && score < item.minScore) {
@@ -312,7 +399,6 @@ export function resolveTurn(state, raw, m) {
     missed(s, out);
     return finish(s, out, { path: `guarded:${m.kind}:${m.id}`, match: m });
   }
-  s.misses = 0;
 
   if (m.kind === "action") doAction(s, C.actions[m.id], m.id, out);
   else if (m.kind === "move") doMove(s, C.moves[m.id], m.id, out);
@@ -328,7 +414,7 @@ function doAction(s, a, id, out) {
   }
   const n = s.counts["a:" + id] ?? 0;
   s.counts["a:" + id] = n + 1;
-  const line = a.lines[Math.min(n, a.lines.length - 1)];
+  const line = a.cycle ? a.lines[n % a.lines.length] : a.lines[Math.min(n, a.lines.length - 1)];
   if (line) out.push({ kind: "text", text: fill(line, s) });
   applyFx(s, a.fx, out);
 }
@@ -344,7 +430,7 @@ function doMove(s, mv, id, out) {
   if (s.place !== "booth") {
     if (mv.inCar) out.push({ kind: "text", text: fill(pick(s, "car:" + id, mv.inCar), s) });
     else if (mv.anywhere) out.push({ kind: "text", text: fill(pick(s, "m:" + id, moodLines(mv.lines, s)), s) });
-    else out.push({ kind: "text", text: carDeafLine(s) });
+    else { out.push({ kind: "text", text: carDeafLine(s) }); missed(s, out); }
     // pushing from inside the car still frays you, but Del can't hear it
     return;
   }
@@ -369,6 +455,7 @@ function doMove(s, mv, id, out) {
 function doTopic(s, t, id, out) {
   if (s.place !== "booth") {
     out.push({ kind: "text", text: carDeafLine(s) });
+    missed(s, out);
     return;
   }
   s.lastTopic = id;
@@ -403,7 +490,9 @@ function doTopic(s, t, id, out) {
     const fits = t.again.filter((a) => typeof a === "string" || needMet(a.need, s));
     if (fits.length) {
       const a = pick(s, "again:" + id, fits);
-      out.push({ kind: "text", text: fill(typeof a === "string" ? a : a.text, s) });
+      let t = typeof a === "string" ? a : a.text;
+      if (Array.isArray(t)) t = pick(s, "again-v:" + id, t); // a list of variants
+      out.push({ kind: "text", text: fill(t, s) });
       if (typeof a === "object") applyFx(s, a.fx, out);
       return;
     }
@@ -422,7 +511,8 @@ function doTopic(s, t, id, out) {
  * ------------------------------------------------------------------ */
 
 function finish(s, out, debug, opts = {}) {
-  if (!/^(fallback|guarded)/.test(debug.path)) s.misses = 0;
+  if (!s.missedThisTurn) s.misses = 0;
+  delete s.missedThisTurn;
   if (!opts.passive) {
     s.turn += 1;
     if (s.place === "booth") s.boothTurns += 1;
@@ -503,6 +593,7 @@ export function idleLine(state, n = 0) {
 // miss in a row, and the clearer version once they've missed four times.
 function missed(s, out) {
   s.misses = (s.misses ?? 0) + 1;
+  s.missedThisTurn = true;
   if (s.misses < 2) return;
   out.push({ kind: "nudge", text: nudgeText(s, s.misses >= 4 ? 2 : 1) });
 }
@@ -531,6 +622,7 @@ function applyFx(s, fx, out) {
 function reveal(s, id, out) {
   if (s.revealed.includes(id)) return;
   s.revealed.push(id);
+  s.flags["revealed_" + id] = s.turn;
   out.push({ kind: "thread", text: C.threads[id] });
 }
 
@@ -568,7 +660,8 @@ const textOf = (entry) => (typeof entry === "string" ? entry : entry.text);
 
 function lockedText(locked, s) {
   if (typeof locked === "string") return locked;
-  return (locked.find((l) => needMet(l.need, s)) ?? locked.at(-1)).text;
+  const t = (locked.find((l) => needMet(l.need, s)) ?? locked.at(-1)).text;
+  return Array.isArray(t) ? pick(s, "locked:" + t[0], t) : t;
 }
 
 function moodLines(lines, s) {
@@ -624,8 +717,25 @@ function clock(minutes) {
   return `${h}:${mm} ${h24 < 12 ? "am" : "pm"}`;
 }
 
+// Common typos and text-speak, fixed before anything reads the input.
+const TYPOS = {
+  teh: "the", hte: "the", ur: "your", u: "you", r: "are", ya: "you", wat: "what", wut: "what",
+  wats: "what's", whats: "what's", plz: "please", pls: "please", abot: "about", abt: "about",
+  happend: "happened", tiem: "time", hury: "hurry", hurr: "hurry", helo: "hello", hii: "hi",
+  cros: "cross", brigde: "bridge", bridg: "bridge", brdge: "bridge", lowr: "lower", ot: "out",
+  leav: "leave", srry: "sorry", sry: "sorry", sory: "sorry", soory: "sorry", whos: "who's",
+  im: "i'm", dont: "don't", cant: "can't", wont: "won't", didnt: "didn't", doesnt: "doesn't",
+  isnt: "isn't", youre: "you're", thats: "that's", wanna: "want to", gonna: "going to",
+  thx: "thanks", ty: "thank you", idk: "i don't know", tbh: "honestly", smth: "something",
+  cuz: "because", bc: "because", waitng: "waiting", reed: "read", foto: "photo", pic: "picture",
+  wether: "weather", drivin: "driving", mis: "miss", fone: "phone", becuase: "because",
+  wuld: "would", woud: "would", shoud: "should", knw: "know", kno: "know", thru: "through",
+  lowerin: "lowering", sonn: "son", logbok: "logbook", booh: "booth",
+};
+const fixTypos = (t) => t.replace(/[A-Za-z']+/g, (w) => TYPOS[w.toLowerCase()] ?? w);
+
 function norm(raw) {
-  return raw.toLowerCase().trim().replace(/[“”]/g, '"').replace(/\s+/g, " ").replace(/[.!]+$/, "");
+  return fixTypos(raw).toLowerCase().trim().replace(/[“”]/g, '"').replace(/\s+/g, " ").replace(/[.!]+$/, "");
 }
 
 const clamp = (n) => Math.max(0, Math.min(10, n));

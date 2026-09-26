@@ -57,7 +57,7 @@ said. What became of Wes is never answered.
 | `content.mjs` | **The whole story.** Places, actions, moves, topics (ladders of answers gated by trust / threads / flags), Del's own beats, filler, hints, endings. The header explains the format. |
 | `engine.mjs` | Turn rules. Deterministic; no story text lives here. |
 | `match.mjs` | Loads the model, embeds every cue, returns the closest match. |
-| `app.mjs` / `index.html` / `style.css` | Title screen, nav A, transcript, rain, night/paper modes. |
+| `app.mjs` / `index.html` / `style.css` | Title screen, nav A, transcript, rain, night/paper modes. (Trust/calm meters under the portrait exist but are switched off in `index.html`.) |
 | `del.png` | Del: a photo turned into Cascadia Code ASCII art, rasterised (charcoal on white). |
 
 ## Tuning

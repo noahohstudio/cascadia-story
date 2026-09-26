@@ -221,6 +221,7 @@ p { margin: 0; }
 
 /* things the Figma doesn't show, drawn only in its own vocabulary */
 .entry--ambient,
+.entry--nudge,
 .entry--note,
 .entry--thread,
 .entry--wait { color: var(--quiet); }
@@ -281,7 +282,7 @@ p { margin: 0; }
 
 /* new text arrives paragraph by paragraph */
 .is-new {
-  animation: arrive 1.6s var(--ease) both;
+  animation: arrive 1.2s var(--ease) both;
   animation-delay: var(--delay, 0ms);
 }
 @keyframes arrive {

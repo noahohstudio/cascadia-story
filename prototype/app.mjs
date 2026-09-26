@@ -33,8 +33,8 @@ const els = {
 
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 // Text arrives slowly, one paragraph after another, like it's being told.
-const STAGGER = reduceMotion ? 0 : 850;      // ms between paragraphs starting
-const REPLY_PAUSE = reduceMotion ? 0 : 500;  // ms of quiet after you press Enter
+const STAGGER = reduceMotion ? 0 : 600;      // ms between paragraphs starting
+const REPLY_PAUSE = reduceMotion ? 0 : 350;  // ms of quiet after you press Enter
 const IDLE_AFTER = 45_000;              // ms of silence before the world stirs
 
 let state = initialState();
@@ -232,10 +232,10 @@ function scheduleIdle() {
   if (idleCount >= 2) return; // twice per silence is enough
   idleTimer = setTimeout(() => {
     if (!modelReady || state.ending || document.hidden) return scheduleIdle();
-    const r = idleLine(state);
+    const r = idleLine(state, idleCount);
     if (r) {
       state = r.state;
-      const node = note(r.text, "ambient");
+      const node = note(r.text, r.kind);
       showPrompt(true);
       scrollToLatest(node);
       idleCount += 1;

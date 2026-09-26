@@ -25,6 +25,9 @@ export const NEAR_MISS = 0.38;
 // least this many turns between them, so they land one at a time.
 const BEAT_GAP = 3;
 
+// Turns without progress before the atmosphere lines start nudging.
+const STALL_TURNS = 6;
+
 export function initialState() {
   return {
     place: C.start.place,
@@ -41,6 +44,9 @@ export function initialState() {
     turn: 0,
     boothTurns: 0,
     ending: null,
+    misses: 0,        // unmatched inputs in a row
+    lastProgress: 0,  // turn of the last new thread, trust, or place
+    progressKey: "",
   };
 }
 
@@ -56,7 +62,7 @@ export function hud(s) {
     choices: s.turn,
     clock: clock(minutes),
     bridge: s.ending === "lowered" ? "lowered" : "raised",
-    dusk: Math.min(s.turn / 22, 1), // 0 = dusk, 1 = full night
+    dusk: s.flags.night ? 1 : Math.min(s.turn / (C.nightfall.afterTurn * 2), 0.5), // night theme sky
     threads: s.revealed.length,
     totalThreads: Object.keys(C.threads).length,
   };
@@ -287,15 +293,26 @@ export function resolveTurn(state, raw, m) {
       return finish(s, out, { path: `mishear:${m.id}`, match: m });
     }
     out.push({ kind: "text", text: fallbackLine(s) });
+    missed(s, out);
     return finish(s, out, { path: "fallback", match: m });
+  }
+
+  // "what's on the radio" at the booth is small talk, not the car radio:
+  // if the best match can't happen here and a close second can, take that
+  const here = (x) => x.kind !== "action" || [undefined, "any", s.place].includes(C.actions[x.id].where);
+  const alt = m.runnersUp?.[0];
+  if (!here(m) && alt && here(alt) && alt.score >= MATCH_THRESHOLD && m.score - alt.score <= 0.05) {
+    m = { ...alt, runnersUp: m.runnersUp, swappedFrom: m.id };
   }
 
   // high-stakes things (leaving, lying, grabbing the lever) need a confident match
   const item = { action: C.actions, move: C.moves, topic: C.topics }[m.kind][m.id];
   if (item.minScore && score < item.minScore) {
     out.push({ kind: "text", text: fallbackLine(s) });
+    missed(s, out);
     return finish(s, out, { path: `guarded:${m.kind}:${m.id}`, match: m });
   }
+  s.misses = 0;
 
   if (m.kind === "action") doAction(s, C.actions[m.id], m.id, out);
   else if (m.kind === "move") doMove(s, C.moves[m.id], m.id, out);
@@ -327,7 +344,7 @@ function doMove(s, mv, id, out) {
   if (s.place !== "booth") {
     if (mv.inCar) out.push({ kind: "text", text: fill(pick(s, "car:" + id, mv.inCar), s) });
     else if (mv.anywhere) out.push({ kind: "text", text: fill(pick(s, "m:" + id, moodLines(mv.lines, s)), s) });
-    else out.push({ kind: "text", text: pick(s, "carDeaf", C.carDeaf) });
+    else out.push({ kind: "text", text: carDeafLine(s) });
     // pushing from inside the car still frays you, but Del can't hear it
     return;
   }
@@ -351,7 +368,7 @@ function doMove(s, mv, id, out) {
 
 function doTopic(s, t, id, out) {
   if (s.place !== "booth") {
-    out.push({ kind: "text", text: pick(s, "carDeaf", C.carDeaf) });
+    out.push({ kind: "text", text: carDeafLine(s) });
     return;
   }
   s.lastTopic = id;
@@ -405,6 +422,7 @@ function doTopic(s, t, id, out) {
  * ------------------------------------------------------------------ */
 
 function finish(s, out, debug, opts = {}) {
+  if (!/^(fallback|guarded)/.test(debug.path)) s.misses = 0;
   if (!opts.passive) {
     s.turn += 1;
     if (s.place === "booth") s.boothTurns += 1;
@@ -434,8 +452,26 @@ function finish(s, out, debug, opts = {}) {
     }
   }
 
-  if (!s.ending && !happened && !opts.passive && s.turn % 3 === 0) {
-    out.push({ kind: "ambient", text: pick(s, "amb", C.ambience[phase(s)]) });
+  // night falls exactly once, midway, and is never mentioned again
+  if (!s.ending && !happened && !opts.passive && !s.flags.night && s.turn >= C.nightfall.afterTurn) {
+    s.flags.night = true;
+    out.push({ kind: "ambient", text: C.nightfall.text });
+    happened = true;
+  }
+
+  // progress = a new thread, more trust, or a new place
+  const key = `${s.revealed.length}|${s.trust}|${s.place}`;
+  if (key !== s.progressKey) { s.progressKey = key; s.lastProgress = s.turn; }
+
+  const nudged = out.some((l) => l.kind === "nudge");
+  if (!s.ending && !happened && !opts.passive && !nudged && s.turn % 3 === 0) {
+    // a long stretch with nothing new: the atmosphere line becomes a nudge
+    const stalled = s.turn - s.lastProgress >= STALL_TURNS;
+    if (stalled) out.push({ kind: "nudge", text: nudgeText(s, 1) });
+    else {
+      const line = ambientLine(s);
+      if (line) out.push({ kind: "ambient", text: line });
+    }
   }
 
   if (s.ending) {
@@ -449,12 +485,32 @@ function finish(s, out, debug, opts = {}) {
   return { lines: out, state: s, debug };
 }
 
-/* When the player hasn't typed for a while. Doesn't advance the turn. */
-export function idleLine(state) {
+/* When the player hasn't typed for a while. Doesn't advance the turn.
+   The first idle line is atmosphere; the next one quietly nudges. */
+export function idleLine(state, n = 0) {
   if (state.ending || state.pending) return null;
   const s = structuredClone(state);
+  if (n >= 1) return { text: nudgeText(s, 1), kind: "nudge", state: s };
   const text = pick(s, "idle:" + s.place, C.idle[s.place]);
-  return { text, state: s };
+  return { text, kind: "ambient", state: s };
+}
+
+/* ---------------------------------------------------------------------
+ * Nudges: help that stays inside the story
+ * ------------------------------------------------------------------ */
+
+// After a miss: nothing the first time, a subtle nudge from the second
+// miss in a row, and the clearer version once they've missed four times.
+function missed(s, out) {
+  s.misses = (s.misses ?? 0) + 1;
+  if (s.misses < 2) return;
+  out.push({ kind: "nudge", text: nudgeText(s, s.misses >= 4 ? 2 : 1) });
+}
+
+function nudgeText(s, level) {
+  const n = C.nudges.find((x) => needMet(x.need, s)) ?? C.nudges.at(-1);
+  if (level >= 2 && n.clearer) return fill(n.clearer, s);
+  return fill(pick(s, "nudge:" + C.nudges.indexOf(n), n.subtle), s);
 }
 
 /* ---------------------------------------------------------------------
@@ -493,6 +549,7 @@ export function needMet(need, s) {
   if (need.anyOf && !need.anyOf.some((n) => needMet(n, s))) return false;
   if (need.mood && ![].concat(need.mood).includes(moodFor(s.agitation))) return false;
   if (need.trust != null && s.trust < need.trust) return false;
+  if (need.trustBelow != null && s.trust >= need.trustBelow) return false;
   if (need.reveal && ![].concat(need.reveal).every((r) => s.revealed.includes(r))) return false;
   if (need.flag && ![].concat(need.flag).every((f) => has(s, f))) return false;
   if (need.notFlag && [].concat(need.notFlag).some((f) => has(s, f))) return false;
@@ -526,16 +583,30 @@ function pick(s, key, list) {
   return list[n % list.length];
 }
 
+// Talking from the car: through glass, or out the window over the rain.
+// Either way he can't make you out; you have to go to him.
+function carDeafLine(s) {
+  return s.flags.window_down
+    ? pick(s, "carDeafWindow", C.carDeafWindow)
+    : pick(s, "carDeaf", C.carDeaf);
+}
+
 function fallbackLine(s) {
   if (s.place !== "booth") return pick(s, "fb:car", C.fallback.car);
   const mood = moodFor(s.agitation);
   return pick(s, "fb:" + mood, C.fallback[mood]);
 }
 
-function phase(s) {
-  if (s.turn < 8) return "dusk";
-  if (s.turn < 16) return "rain";
-  return "night";
+// An atmosphere line nobody has seen yet, or null once they're used up.
+function ambientLine(s) {
+  const pool = [...C.ambience.any, ...(s.flags.night ? C.ambience.afterDark : [])];
+  s.usedAmbience ??= [];
+  const fresh = pool.filter((t) => !s.usedAmbience.includes(t));
+  if (!fresh.length) return null;
+  // step through the fresh lines rather than taking them in order
+  const line = fresh[(s.turn * 7) % fresh.length];
+  s.usedAmbience.push(line);
+  return line;
 }
 
 function fill(text, s) {

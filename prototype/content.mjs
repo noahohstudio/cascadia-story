@@ -99,6 +99,14 @@ export const carDeaf = [
   `Your voice stays in the car with you. In the booth, the old man watches your headlights and waits.`,
 ];
 
+/* Said instead of carDeaf once the window is rolled down. He still can't
+   make you out over the rain and the creek. */
+export const carDeafWindow = [
+  `You call it out the window. The rain and the creek take most of it. In the booth, he cups a hand to his ear, then shakes his head.`,
+  `You shout it across the lot. He turns toward the sound and frowns, the way you would at a radio between stations.`,
+  `Half of it reaches him, maybe. He lifts a hand, palm up: what? Then he goes back to watching the bridge.`,
+];
+
 export const inventory = `Car keys. A paper map, folded wrong. Your phone, no signal. Whatever else you brought with you.`;
 
 /* ------------------------------------------------------------------------
@@ -115,6 +123,8 @@ export const actions = {
       "walk over to the booth", "go talk to him", "approach the old man",
       "go up to the window", "walk to the booth", "knock on the booth window",
       "go over to the bridge", "get out and talk to the man", "leave the car",
+      "unbuckle and get out", "step out into the rain", "walk over to the old man",
+      "go knock on his window", "get out and walk over", "head over to the booth on foot",
     ],
     where: "car",
     fx: { place: "booth" },
@@ -131,6 +141,93 @@ export const actions = {
     fx: { place: "car" },
     lines: [""],
     elsewhere: `You're already in the car.`,
+  },
+
+  window_down: {
+    cues: [
+      "roll down my window", "roll the window down", "open the car window", "lower my window",
+      "call out the window", "shout to him from the car", "yell out the window",
+      "wind down the window", "stick my head out the window", "open my window",
+      "open the window", "roll down the window and call to him", "call to him from the car",
+      "talk to him through the window",
+    ],
+    where: "car",
+    fx: { set: { window_down: true } },
+    lines: [
+      `You wind the window down. Rain comes in sideways, cold on your arm. You call across the lot, and the wind takes it off over the creek. In the booth, the old man turns his head toward you, then away. From here you're just noise.`,
+      `The window's already down. Rain's getting on the seat.`,
+    ],
+    elsewhere: `You're standing in the rain. There's no window between you and him now.`,
+  },
+
+  window_up: {
+    cues: ["roll the window up", "close the window", "wind the window up", "shut my window"],
+    where: "car",
+    fx: { set: { window_down: false } },
+    lines: [`You wind it back up. The rain goes quiet again, and so does everything else.`],
+    elsewhere: `No window out here.`,
+  },
+
+  radio: {
+    cues: [
+      "turn on the radio", "listen to the radio", "change the station", "put some music on",
+      "switch the radio on", "check the radio",
+    ],
+    where: "car",
+    lines: [
+      `An AM station swims in and out: half a slow song, a weather report for the pass, then static. You turn it off. The rain sounds louder after.`,
+      `Static, mostly. For a second, a voice reading road closures. Then nothing.`,
+    ],
+    elsewhere: `The radio's in the car.`,
+  },
+
+  wipers: {
+    cues: ["turn off the wipers", "turn the wipers up", "speed up the wipers", "stop the wipers"],
+    where: "car",
+    lines: [
+      `You turn the wipers off. The windshield blurs almost at once, and the booth becomes a smear of yellow light.`,
+      `The wipers go back and forth, back and forth.`,
+    ],
+    elsewhere: `The wipers keep going without you, over in the car.`,
+  },
+
+  engine_off: {
+    cues: [
+      "turn off the engine", "kill the engine", "switch off the car", "turn the car off",
+      "take the keys out",
+    ],
+    where: "car",
+    fx: { set: { engine_off: true } },
+    lines: [
+      `You turn the key back. The engine ticks as it cools, and now you can hear the creek, loud under the raised bridge.`,
+      `The engine's already off. It's very quiet in here.`,
+    ],
+    elsewhere: `The car's over there, engine idling.`,
+  },
+
+  lights_off: {
+    cues: [
+      "turn off my headlights", "dim the headlights", "switch off the lights",
+      "stop shining my lights at him", "turn the headlights down",
+    ],
+    where: "car",
+    fx: { agitation: -1, set: { lights_off: true } },
+    lines: [
+      `You switch off the headlights. In the booth, the old man sits back, like something's let go of him.`,
+      `The lights are already off. The booth window is the only light left.`,
+    ],
+    elsewhere: `Your headlights are back at the car.`,
+  },
+
+  mirror: {
+    cues: [
+      "look in the rearview mirror", "look behind me", "check the mirror", "look back down the road",
+    ],
+    where: "any",
+    lines: [
+      `Behind you, the road you came in on runs back into dark trees. Nothing on it. Nobody else is coming this way tonight.`,
+      `Still nothing behind you. Just the road, and the rain on it.`,
+    ],
   },
 
   drive_across: {
@@ -536,6 +633,21 @@ export const moves = {
     tired: [`He waves it off.`],
   },
 
+  smalltalk: {
+    cues: [
+      "tell me a joke", "sing me a song", "do you like pizza", "what's your favorite food",
+      "do you like music", "what do you do for fun", "do you have any hobbies",
+      "what's your favorite color", "do you watch tv",
+    ],
+    trustCap: 0,
+    lines: [
+      `“Not much of a joker,” he says.`,
+      `He looks at you like you've asked him to dance.`,
+      `“Radio's broke,” he says, which might be an answer to something.`,
+      `He thinks about it for longer than you'd expect. “Coffee,” he says finally. “I like coffee.”`,
+    ],
+  },
+
   goodnight: {
     cues: ["goodbye", "good night", "see you", "bye", "take care"],
     trustCap: 0,
@@ -603,7 +715,7 @@ export const topics = {
       "what's the bridge up for",
     ],
     responses: [
-      `“Goes up at ten to eight. Every night.”`,
+      { fx: { set: { asked_bridge: true } }, text: `“Goes up at ten to eight. Every night.”` },
       {
         need: { trust: 1 },
         text: `“For the boats.” He glances at the creek, which hasn't carried a boat in years. “…Could be boats.”`,
@@ -963,40 +1075,158 @@ export const fallback = {
   car: [
     `Nothing happens. The wipers go back and forth.`,
     `You sit with that a moment. The booth light doesn't change.`,
+    `The engine ticks over. Rain gathers on the glass and runs.`,
+    `You say it to the dashboard. The dashboard has no opinion.`,
+    `Out past the wipers, the bridge stays exactly where it is.`,
+    `The car smells like the last three hundred miles.`,
   ],
   present: [
     `“Hm.” He thinks about it. “Don't know about that.”`,
     `He waits, like there's more coming.`,
+    `“Can't say I follow,” he says. Not unkindly.`,
+    `He turns it over for a while, then lets it go. “Hm.”`,
+    `“Maybe,” he says, which could mean anything.`,
+    `He gives you a small nod. It isn't quite an answer.`,
   ],
   wandering: [
     `He looks at you like you said it in the wrong order. “Say that again?”`,
     `“Mm.” He's looking at the far side again.`,
     `He nods at something, though it may not have been what you said.`,
+    `“Eh?” He leans toward the gap, then seems to forget why.`,
+    `He opens his mouth to answer, and the answer goes somewhere else.`,
+    `“That's…” He frowns at the logbook. “Hm. That's right.”`,
+    `The rain takes most of it. He only catches the end, and shrugs.`,
   ],
   uneasy: [
     `He doesn't answer. His hand stays on the logbook.`,
     `“I don't know what you want,” he says, to the window.`,
+    `He shifts on his stool, away from you, just slightly.`,
+    `“I heard you,” he says. That's all.`,
+    `His jaw works. Nothing comes out.`,
   ],
-  closing: [`He isn't listening anymore. His hand is on the pane.`],
+  closing: [
+    `He isn't listening anymore. His hand is on the pane.`,
+    `He's looking straight past you, at nothing.`,
+    `The pane is open an inch. It doesn't open any further.`,
+  ],
 };
 
-/* Every few turns, if nothing else happened. Changes as dusk becomes night. */
+/* NUDGES: quiet help when the player is stuck. After two misses in a row
+   (or a long stretch with nothing new, or a long silence) the story points
+   toward the next thing: `subtle` is narration only, never an instruction;
+   `clearer` comes only if they keep missing. The first entry whose `need`
+   passes is used, so order = the story's order. */
+export const nudges = [
+  {
+    need: { place: "car" },
+    subtle: [
+      `Across the lot, the old man in the booth hasn't taken his eyes off your headlights.`,
+      `The booth window glows through the rain. From here it looks warm.`,
+    ],
+    clearer: `He won't hear you from inside the car.`,
+  },
+  {
+    need: { mood: ["uneasy", "closing"] },
+    subtle: [
+      `His hands won't stay still on the counter.`,
+      `He's holding himself very carefully, like something might spill.`,
+    ],
+    clearer: `Whatever you're doing, it's making him worse. Go gently, or just wait with him.`,
+  },
+  {
+    need: { notReveal: "why_up", flag: "asked_bridge", trustBelow: 2 },
+    subtle: [
+      `He isn't a man to be hurried. The heater ticks. He seems to be waiting to see if you'll wait.`,
+      `He watches you the way you'd watch weather: to see what kind it is.`,
+    ],
+    clearer: `Questions aren't getting far. Patience might.`,
+  },
+  {
+    need: { notReveal: "why_up" },
+    subtle: [
+      `He glances up at the raised bridge, the way you'd check a clock.`,
+      `The two halves of the bridge stand up against the sky. He keeps looking at them.`,
+    ],
+    clearer: `He might tell you why the bridge is up. He might need asking more than once.`,
+  },
+  {
+    need: { notReveal: "wes", notFlag: "saw_photo" },
+    subtle: [
+      `His eyes go to the photograph taped to the glass, then away.`,
+      `The photograph on the window has been handled a lot. The tape's been replaced more than once.`,
+    ],
+    clearer: `There's a photograph taped inside the booth window.`,
+  },
+  {
+    need: { notReveal: "wes" },
+    subtle: [
+      `He looks up the far road again. Whoever he's watching for, they're late.`,
+      `Every set of headlights on the far bank, he leans forward a little.`,
+    ],
+    clearer: `He's waiting for someone. You could ask who.`,
+  },
+  {
+    need: { notReveal: "last_words", trustBelow: 4 },
+    subtle: [
+      `He says the name carefully when he says it, like it could break.`,
+      `Something in him opens a little whenever you stop asking and just stay.`,
+    ],
+    clearer: `He'll need to trust you before he tells the rest. Stay a while. Share something of your own.`,
+  },
+  {
+    need: { notReveal: "last_words" },
+    subtle: [
+      `His hand rests on the logbook, over the page with the circle on it.`,
+      `He keeps starting a sentence about that night, and stopping.`,
+    ],
+    clearer: `Something happened the night Wes left. You could ask him about it.`,
+  },
+  {
+    need: { trustBelow: 5 },
+    subtle: [
+      `He's gone quiet. He still hasn't said the thing he stopped on.`,
+      `He looks at you like he's deciding something.`,
+    ],
+    clearer: `He isn't done. Stay with him a little longer.`,
+  },
+  {
+    need: {},
+    subtle: [
+      `His lips move a little, like he's practising what he'd say to someone.`,
+      `He looks at the far bank as if someone were standing on it.`,
+    ],
+    clearer: `He never got to say it to Wes. You could ask him what he'd say.`,
+  },
+];
+
+/* Every few turns, if nothing else happened: the world around you.
+   Each line is used ONCE at most; when they run out, the atmosphere goes
+   quiet rather than repeating. None of these mention the light changing:
+   that happens exactly once, in `nightfall`. */
 export const ambience = {
-  dusk: [
-    `The last of the light is going out of the water.`,
+  // any time
+  any: [
     `Downstream, a heron lifts off, complaining.`,
-    `The sky over the far trees goes from grey to a darker grey.`,
-  ],
-  rain: [
     `The rain picks up. It drums on the roof of the booth.`,
     `Water runs off the raised deck in two thin falls.`,
     `A gust shakes the booth's little window in its frame.`,
+    `The creek is loud under the raised bridge.`,
+    `Somewhere up the road, a dog barks twice and gives up.`,
+    `A drip from the booth's gutter keeps landing on the same stone.`,
+    `The space heater clicks off, then on again.`,
   ],
-  night: [
-    `It's full dark now. The booth is the only light for miles.`,
-    `The creek is louder in the dark.`,
+  // only once it's dark
+  afterDark: [
+    `The booth is the only light for miles.`,
     `On the far side, something might be headlights. Then it isn't.`,
+    `Your breath shows now, when you talk.`,
   ],
+};
+
+/* The one moment the evening turns to night. Fires once, midway. */
+export const nightfall = {
+  afterTurn: 9,
+  text: `At some point in the last few minutes, while neither of you was watching, the dusk gave out. It's night now. The booth window is the brightest thing in the valley.`,
 };
 
 /* When the player hasn't typed anything for a while. */

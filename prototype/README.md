@@ -41,9 +41,14 @@ said. What became of Wes is never answered.
    lever) need a confident match. Near-misses make Del ask *"You asking
    about the bridge?"*. Patient moves only earn trust a couple of times each.
    He warns you once before shutting the window.
-4. **Then time passes:** the clock ticks, dusk becomes night, and Del has
+4. **Nudges, not error messages:** miss twice in a row, stall for six turns,
+   or go quiet, and a line of narration points toward the next step
+   (`nudges` in `content.mjs`, in story order). Keep missing and a clearer
+   version appears.
+5. **Then time passes:** the clock ticks, dusk becomes night, and Del has
    his own moments (asks your name, mistakes you for Wes, forgets your name)
-   spaced at least three turns apart.
+   spaced at least three turns apart. Night falls once, midway; atmosphere
+   lines are each used once, never repeated.
 
 ## Files
 

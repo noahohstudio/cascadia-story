@@ -835,7 +835,12 @@ He looks at his hands on the lever like they belong to someone else. The leaf ha
       "who are you waiting for", "are you expecting someone", "who's coming across tonight",
       "who do you want to see", "who are you looking for", "who should be coming",
     ],
-    locked: `“Nobody.” Too fast. “Who said I was waiting?”`,
+    locked: [{ text: [
+      `“Nobody.” Too fast. “Who said I was waiting?”`,
+      `“I'm working,” he says. “That's not the same as waiting.”`,
+      `He glances up the far road before he can stop himself. “Nobody.”`,
+    ] }],
+    lockedNudge: `He's not going to say it outright yet. Ask about the bridge first, and let him get there.`,
     responses: [
       {
         need: { reveal: "why_up" },
@@ -855,10 +860,30 @@ He looks at his hands on the lever like they belong to someone else. The leaf ha
       "is that your son in the picture", "tell me about your boy", "what's Wes like",
       "what does Wes do", "your son?", "you have a son?", "who's Wes",
     ],
+    // Before he trusts you, he dodges. Varied, so his forgetfulness reads as
+    // a person, not a loop. "Who's asking?" lets you answer with your name.
     locked: [
-      { need: { reveal: "why_up" }, text: `He opens his mouth, then shuts it. “Who's asking?”` },
-      { text: `“Who's asking?”` },
+      {
+        need: { reveal: "why_up" },
+        fx: { pending: { type: "name", soft: true } },
+        text: [
+          `He opens his mouth, then shuts it. “Who's asking?”`,
+          `“Son,” he repeats, like he's testing the word. He doesn't pick it up.`,
+          `He looks at the photograph taped to the glass, then at you. “You ask a lot of questions for someone passing through.”`,
+          `“That's family business,” he says. Then, quieter: “Who'd you say you were?”`,
+        ],
+      },
+      {
+        fx: { pending: { type: "name", soft: true } },
+        text: [
+          `“Who's asking?”`,
+          `He squints at you. “Why would you want to know about that?”`,
+          `“Never mind that,” he says, and looks back at the bridge.`,
+          `“You're not from around here,” he says, which isn't an answer.`,
+        ],
+      },
     ],
+    lockedNudge: `He isn't ready to talk about that. Maybe start with something nearer: the bridge, or what he's watching for.`,
     responses: [
       {
         need: { anyOf: [{ reveal: "wes" }, { flag: "saw_photo" }] },
@@ -885,7 +910,12 @@ He looks at his hands on the lever like they belong to someone else. The leaf ha
       "what happened that night",
     ],
     climb: "highest", // a direct question: if he trusts you enough, he tells it
-    locked: `“That's between me and him.”`,
+    locked: [{ text: [
+      `“That's between me and him.”`,
+      `“Old business,” he says, and lets it lie there.`,
+      `He shakes his head, once. Not tonight.`,
+    ] }],
+    lockedNudge: `That's further in than he'll go yet. Find out who "him" is first.`,
     responses: [
       { need: { reveal: "wes" }, text: `“He had his reasons. I had mine.”` },
       { need: { trust: 4 }, reveal: "last_words", text: THE_NIGHT },
@@ -983,7 +1013,12 @@ He looks at his hands on the lever like they belong to someone else. The leaf ha
       "why do you write down every car", "why is every page the same date",
       "what does the circle mean",
     ],
-    locked: `“Just the book. Every car, every night.” He puts his hand flat on the page.`,
+    locked: [{ text: [
+      `“Just the book. Every car, every night.” He puts his hand flat on the page.`,
+      `“Records,” he says. His hand stays flat on the page.`,
+      `He closes the book halfway, then opens it again, like he isn't sure which you'd prefer.`,
+    ] }],
+    lockedNudge: `The logbook's right there on the counter. You could look at it yourself.`,
     responses: [
       {
         need: { flag: "read_logbook" },
@@ -1124,6 +1159,7 @@ export const answers = {
   name_refused: `“Suit yourself.”`,
   name_volunteered: `“{name}.” He nods. “All right.”`,
   name_ask_back: `“Del,” he says, as if you should have known.`,
+  name_soft_known: `“{name},” he repeats, like he's filing it somewhere. It doesn't get you any further.`,
 
   son_yes: `His whole face opens. Then he looks, really looks, and it closes again, slower than it opened. “No,” he says. “No. Wes had his mother's eyes.” He sits down heavily. “That's a cruel thing. That's a cruel thing to do.”`,
   son_no: `“No,” he says. “No. Course not.” He sits back down, slowly. “Sorry. The light. You looked—” He shakes his head. “He'd be older than you by now. Wouldn't he.”

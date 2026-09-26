@@ -172,6 +172,13 @@ function answerPending(s, raw, input, out) {
       return "name:refused";
     }
     const got = extractName(raw);
+    if (got && p.soft) s.lockedThisTurn = true; // answering "who's asking?" keeps the thread
+    if (got && p.soft && s.name) {
+      // he asked who's asking; he already has your name
+      s.pending = null;
+      out.push({ kind: "text", text: fill(C.answers.name_soft_known, s) });
+      return "name:soft-known";
+    }
     if (got) {
       const name = got.name;
       if (got.askedBack) s.flags.asked_back = true;
@@ -331,6 +338,7 @@ function volunteeredName(raw) {
 function setName(s, name, out, line) {
   s.name = name[0].toUpperCase() + name.slice(1).toLowerCase();
   s.flags.name_given = s.turn;
+  s.flags.asked_name = true; // he has it now; don't ask "you got a name?"
   if (s.pending?.type === "name") s.pending = null;
   out.push({ kind: "text", text: fill(line, s) });
 }
@@ -482,6 +490,15 @@ function doTopic(s, t, id, out) {
   // rung 0 itself is gated: serve `locked` and don't count it as asked
   if (!asked && !needMet(needOf(entry), s) && t.locked) {
     out.push({ kind: "text", text: fill(lockedText(t.locked, s), s) });
+    const le = lockedEntry(t.locked, s);
+    if (le?.fx) applyFx(s, le.fx, out);
+    // the same locked door twice in a row: point somewhere he will talk
+    s.lockedStreak = s.lastLocked === id ? (s.lockedStreak ?? 1) + 1 : 1;
+    s.lastLocked = id;
+    s.lockedThisTurn = true;
+    if (s.lockedStreak % 2 === 0) {
+      out.push({ kind: "nudge", text: fill(t.lockedNudge ?? nudgeText(s, 1), s) });
+    }
     return;
   }
 
@@ -513,6 +530,8 @@ function doTopic(s, t, id, out) {
 function finish(s, out, debug, opts = {}) {
   if (!s.missedThisTurn) s.misses = 0;
   delete s.missedThisTurn;
+  if (!s.lockedThisTurn) s.lastLocked = null;
+  delete s.lockedThisTurn;
   if (!opts.passive) {
     s.turn += 1;
     if (s.place === "booth") s.boothTurns += 1;
@@ -657,6 +676,11 @@ export function needMet(need, s) {
 
 const needOf = (entry) => (entry && typeof entry === "object" ? entry.need : null);
 const textOf = (entry) => (typeof entry === "string" ? entry : entry.text);
+
+function lockedEntry(locked, s) {
+  if (typeof locked === "string") return null;
+  return locked.find((l) => needMet(l.need, s)) ?? locked.at(-1);
+}
 
 function lockedText(locked, s) {
   if (typeof locked === "string") return locked;

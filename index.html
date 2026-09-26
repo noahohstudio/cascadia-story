@@ -2,45 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Del's Bridge</title>
-
-  <!--
-    ── Interface intentionally blank ──────────────────────────────────────
-    The design lands here from Figma (desktop first, then a title screen).
-    engine.js just needs these hooks to exist somewhere on the page. The
-    markup and classes around them are yours — restructure freely, keep
-    the data-* attributes.
-
-      REQUIRED
-        [data-scene]     wrapper for the whole scene; gets the .is-entering
-                         class on every scene change (hook for transitions)
-        [data-prose]     container; engine fills it with one <p> per paragraph
-        [data-choices]   <ul>; engine fills it with <li><button class="choice">
-
-      OPTIONAL
-        [data-title]     text node; receives STORY.title
-        [data-restart]   <button>; "start over" control (two clicks to confirm)
-
-    NOTE: the choice list is the current interim input. The real model is
-    freeform text + an AI response layer — a text input and a response
-    region will land here once that design is settled.
-    ───────────────────────────────────────────────────────────────────────
-  -->
-
-  <link rel="stylesheet" href="style.css">
+  <!-- The game lives in prototype/. This page just sends visitors there,
+       keeping anything after the address (like ?debug). -->
+  <meta http-equiv="refresh" content="0; url=prototype/">
+  <link rel="canonical" href="prototype/">
+  <script>location.replace("prototype/" + location.search + location.hash);</script>
 </head>
 <body>
-  <main data-scene>
-    <h1 data-title></h1>
-    <div data-prose></div>
-    <ul data-choices></ul>
-    <button type="button" data-restart hidden></button>
-  </main>
-
-  <noscript>This story needs JavaScript to run.</noscript>
-
-  <script src="story.js"></script>
-  <script src="engine.js"></script>
+  <p><a href="prototype/">Play Del's Bridge</a></p>
 </body>
 </html>

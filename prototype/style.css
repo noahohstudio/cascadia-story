@@ -31,6 +31,7 @@
   --rule: #000000;      /* nav hairline */
   --speech: #000000;
   --quiet: #444444;
+  --caption: rgba(0, 0, 0, 0.5);   /* captions under the output: a step back */
 }
 
 :root[data-theme="night"] {
@@ -41,6 +42,7 @@
   --rule: #2a2e35;
   --speech: #ece6d8;    /* Del's words sit brighter than narration */
   --quiet: #6c7078;
+  --caption: rgba(236, 230, 216, 0.4);
 }
 
 * { box-sizing: border-box; }
@@ -258,15 +260,18 @@ p { margin: 0; }
 .prompt { margin-top: calc(72 * var(--u)); }
 .entry--say p::before { content: ">"; }
 
-/* things the Figma doesn't show, drawn only in its own vocabulary */
+/* Captions under the output (atmosphere, nudges, hints, threads) sit a
+   step back from the story: same type, half the ink. Colour, not opacity,
+   so the answer buttons inside a caption stay full strength. */
 .entry--ambient,
 .entry--nudge,
 .entry--note,
 .entry--thread,
-.entry--wait { color: var(--quiet); }
+.entry--wait { color: var(--caption); }
 
 .choices { display: flex; gap: 2ch; margin-top: 1lh; }
 .choice {
+  color: var(--ink);
   padding: 0;
   border: 0;
   background: none;

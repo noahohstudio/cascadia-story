@@ -32,7 +32,9 @@ const els = {
 };
 
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
-const STAGGER = reduceMotion ? 0 : 420; // ms between paragraphs arriving
+// Text arrives slowly, one paragraph after another, like it's being told.
+const STAGGER = reduceMotion ? 0 : 850;      // ms between paragraphs starting
+const REPLY_PAUSE = reduceMotion ? 0 : 500;  // ms of quiet after you press Enter
 const IDLE_AFTER = 45_000;              // ms of silence before the world stirs
 
 let state = initialState();
@@ -105,12 +107,13 @@ function renderLine(line) {
   } else {
     for (const t of paragraphs(line.text)) {
       const p = paragraph(t);
+      arrive(p);
       div.append(p);
     }
-    arrive(div);
     if (line.choices) {
       const row = document.createElement("div");
       row.className = "choices";
+      arrive(row);
       for (const c of line.choices) {
         const b = document.createElement("button");
         b.type = "button";
@@ -127,8 +130,9 @@ function renderLine(line) {
   return div;
 }
 
-function renderLines(lines) {
-  delay = 0;
+// startAt: how long to wait before the first line (a beat after your input)
+function renderLines(lines, startAt = 0) {
+  delay = startAt;
   return lines.filter((l) => l.text !== "").map(renderLine);
 }
 
@@ -137,13 +141,16 @@ function showPrompt(on) {
   els.form.hidden = !on;
   if (on) {
     els.form.classList.remove("is-new");
+    void els.form.offsetWidth; // restart the fade, not just keep the old one
     arrive(els.form);
     els.input.focus({ preventScroll: true });
   }
 }
 
-function note(text, kind = "note") {
-  delay = 0;
+// A one-off line that appears right away (your own words, debug, idle).
+// Pass { queue: true } to line it up after whatever is already fading in.
+function note(text, kind = "note", { queue = false } = {}) {
+  if (!queue) delay = 0;
   return renderLine({ kind, text });
 }
 
@@ -192,7 +199,7 @@ async function submit(text) {
       note(r, "debug");
     }
 
-    renderLines(result.lines);
+    renderLines(result.lines, REPLY_PAUSE);
     renderHud();
     scrollToLatest(say);
   } catch (err) {
@@ -244,7 +251,7 @@ function begin() {
   state = initialState();
   const opening = openingLines(state);
   renderLines(opening);
-  note("Type anything: what you'd do, or what you'd say.");
+  note("Type anything: what you'd do, or what you'd say.", "note", { queue: true });
   renderHud();
   els.transcript.scrollTop = 0;
   showPrompt(true);

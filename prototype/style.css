@@ -281,7 +281,7 @@ p { margin: 0; }
 
 /* new text arrives paragraph by paragraph */
 .is-new {
-  animation: arrive 0.9s var(--ease) both;
+  animation: arrive 1.6s var(--ease) both;
   animation-delay: var(--delay, 0ms);
 }
 @keyframes arrive {
